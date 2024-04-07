@@ -3,18 +3,17 @@ To develop a machine learning model for chromosome recognition with images like 
 Dataset Acquisition: Make sure you have a large and diverse dataset. More images like the one you provided will be needed. They should be high-resolution and well-annotated.
 
 Preprocessing: Clean the images and prepare them for the model. This might include:
-
 Grayscale conversion, if not already in grayscale.
 Noise reduction to remove any artifacts that are not part of the chromosomes.
 Contrast enhancement to make the chromosomes more distinct.
 Thresholding or edge detection to outline the chromosomes.
-Segmentation: Separate each chromosome from the background and from each other. This could be done using techniques like:
 
+Segmentation: Separate each chromosome from the background and from each other. This could be done using techniques like:
 Watershed algorithm.
 Contour detection.
 Morphological operations (dilation, erosion).
-Feature Extraction: Identify and quantify characteristics of the chromosomes such as:
 
+Feature Extraction: Identify and quantify characteristics of the chromosomes such as:
 Length.
 Centromere location.
 Banding pattern.
