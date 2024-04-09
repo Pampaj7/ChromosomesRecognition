@@ -16,6 +16,7 @@ def display_images(original_image, preprocessed):
     plt.show()
 
 
+
 def preprocess_image(image_path):
     # Read the image in grayscale
     gray_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -26,9 +27,10 @@ def preprocess_image(image_path):
     # Contrast enhancement
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
     contrast_enhanced_image = clahe.apply(denoised_image)  # he rocks
-    """ # can be usefull for resizing, need to check in the cnn
-    image = contrast_enhanced_image
+    return contrast_enhanced_image
 
+
+def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     # Calculate the ratio of the target dimensions
     height_ratio, width_ratio = 224 / image.shape[0], 224 / image.shape[1]
     new_ratio = min(height_ratio, width_ratio)
@@ -47,12 +49,11 @@ def preprocess_image(image_path):
 
     # Apply padding
     padded_image = cv2.copyMakeBorder(resized_image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
-    """
-    return contrast_enhanced_image
+
+    return padded_image
 
 
 def clean_image(image):
-
     _, binary_image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     contours, _ = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     print(len(contours))
@@ -71,7 +72,7 @@ def separate_overlapping_chromosomes(binary_image):
     binary_image = 255 - binary_image
 
     # Perform distance transform
-    distance_transform = cv2.distanceTransform(binary_image, cv2.DIST_L2, 0)
+    distance_transform = cv2.distanceTransform(binary_image, cv2.DIST_L2, 5)
     # Normalize the distance transform for visualization
     normalized_dist_transform = cv2.normalize(distance_transform, None, 255, 0, cv2.NORM_MINMAX)
 
@@ -92,26 +93,49 @@ def separate_overlapping_chromosomes(binary_image):
     return segmented_image
 
 
-def remove_small_objects(binary_image, min_area):
-    # Find all connected components (aka blobs in the image)
+def contours_extractor(binaryImage):
+    # Find contours
+    contours, _ = cv2.findContours(binaryImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return contours
+
+
+def binary_converter(image):
+    _, binary_image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    return cv2.bitwise_not(binary_image) # ocho value trash
+
+
+def take_biggest_object(binary_image):
+    # Find all connected components with their stats
     num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(binary_image, connectivity=8)
 
-    # Create a mask where we will fill in the desired regions
+    # Skip the first label (0) as it is the background
+    # and find the label of the largest component based on the area
+    largest_label = 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])
+
+    # Create a mask for the largest component
     mask = np.zeros_like(binary_image)
-
-    # Loop through all found components
-    for label in range(1, num_labels):  # Start from 1 to ignore the background
-        area = stats[label, cv2.CC_STAT_AREA]
-
-        # If the component has sufficient area, keep it
-        if area >= min_area:
-            mask[labels == label] = 255
+    mask[labels == largest_label] = 255
 
     return mask
 
+
+def apply_mask(original_image, binary_image):
+    # Ensure the binary image is in the correct boolean format
+    mask = binary_image > 0
+
+    # Create an output image that only contains the area of interest from the original image
+    # Initialize it with zeros (all black image)
+    masked_image = np.zeros_like(original_image)
+
+    # Apply the mask to each channel of the original image
+    masked_image[mask] = original_image[mask]
+
+    return masked_image
+
+
 datasetPath = 'Dataset/Data/24_chromosomes_object/cropped_chromosomes/'
 annotationsPath = 'Dataset/Data/24_chromosomes_object/annotations/'
-image_path = (datasetPath + "chromosome_3.jpg")
+image_path = (datasetPath + "chromosome_2.jpg")
 original_image = cv2.imread(image_path)
 original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 
@@ -121,12 +145,20 @@ binaryImage, contours, contoursimage = clean_image(preprocessed_image)  # TODO n
 
 segmented_image = separate_overlapping_chromosomes(contoursimage)
 
-noobj = remove_small_objects(binaryImage, 400)
+noobj = take_biggest_object(binaryImage)
 
-display_images(original_image, noobj)
+#display_images(binaryImage, noobj)
 
-display_images(original_image, segmented_image)
+#display_images(contoursimage, segmented_image)
 
-display_images(contoursimage, binaryImage)
+#display_images(contoursimage, binaryImage)
 
-display_images(original_image, preprocessed_image)
+#display_images(original_image, preprocessed_image)
+
+masked_image = apply_mask(preprocessed_image, noobj)
+
+#display_images(preprocessed_image, masked_image)
+
+resized_image = image_resize(masked_image)
+
+display_images(masked_image, resized_image)
