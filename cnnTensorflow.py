@@ -2,8 +2,9 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.optimizers.legacy import Adam  # Use the legacy version of Adam for M1/M2 Mac compatibility
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.applications.resnet50 import preprocess_input
+
 
 # Load ResNet-50 pre-trained on ImageNet without the top layer
 base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
@@ -17,13 +18,13 @@ x = base_model.output
 x = GlobalAveragePooling2D()(x)
 x = Dense(1024, activation='relu')(x)
 x = Dropout(0.5)(x)
-predictions = Dense(48, activation='softmax')(x)
+predictions = Dense(50, activation='softmax')(x)
 
 # This is the model we will train
 model = Model(inputs=base_model.input, outputs=predictions)
 
 # Compile the model
-model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=Adam(learning_rate=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
 
 
 #data augmentation
@@ -55,5 +56,5 @@ history = model.fit(
     steps_per_epoch=train_generator.samples // train_generator.batch_size,
     validation_data=validation_generator,
     validation_steps=validation_generator.samples // validation_generator.batch_size,
-    epochs=10)
+    epochs=100)
 

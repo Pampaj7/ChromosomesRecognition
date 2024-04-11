@@ -9,7 +9,7 @@ preprocessed_dir = "Dataset/Data/24_chromosomes_object/preprocessed_images"
 
 # Run the complete extraction
 # uncomment to redo
-# SCE.complete_extractor(image_dir, annotations_dir, cropped_dir)
+SCE.complete_extractor(image_dir, annotations_dir, cropped_dir)
 
 # Run the preprocessing
 # uncomment to redo
