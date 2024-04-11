@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+from tqdm import tqdm
 
 
 def display_images(original_image, preprocessed):
@@ -16,7 +18,6 @@ def display_images(original_image, preprocessed):
     plt.show()
 
 
-
 def preprocess_image(image_path):
     # Read the image in grayscale
     gray_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -30,33 +31,31 @@ def preprocess_image(image_path):
     return contrast_enhanced_image
 
 
-def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-    # Calculate the ratio of the target dimensions
-    height_ratio, width_ratio = 224 / image.shape[0], 224 / image.shape[1]
-    new_ratio = min(height_ratio, width_ratio)
+def image_resize(img, new_size):
+    height, width = img.shape[:2]
+    pad_width = (new_size[0] - width) // 2
+    pad_height = (new_size[1] - height) // 2
 
-    # Calculate new dimensions
-    new_height, new_width = int(image.shape[0] * new_ratio), int(image.shape[1] * new_ratio)
+    # If the new dimensions are smaller than the image's dimensions,
+    # this will raise an error.
+    if pad_width < 0 or pad_height < 0:
+        raise ValueError("New size must be larger than the image size")
 
-    # Resize the image
-    resized_image = cv2.resize(image, (new_width, new_height))
+    # Compute padding to be added to each side of the image
+    top_pad = pad_height + (new_size[1] - (height + 2 * pad_height)) % 2
+    bottom_pad = pad_height
+    left_pad = pad_width + (new_size[0] - (width + 2 * pad_width)) % 2
+    right_pad = pad_width
 
-    # Calculate padding
-    delta_width = 224 - new_width
-    delta_height = 224 - new_height
-    top, bottom = delta_height // 2, delta_height - (delta_height // 2)
-    left, right = delta_width // 2, delta_width - (delta_width // 2)
-
-    # Apply padding
-    padded_image = cv2.copyMakeBorder(resized_image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=0)
-
-    return padded_image
+    # Add padding to the image
+    padded_img = cv2.copyMakeBorder(img, top_pad, bottom_pad, left_pad, right_pad,
+                                    borderType=cv2.BORDER_CONSTANT, value=[0, 0, 0])
+    return padded_img
 
 
 def clean_image(image):
     _, binary_image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     contours, _ = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    print(len(contours))
 
     contour_image = np.copy(image)
     cv2.drawContours(contour_image, contours, -1, (255, 0, 0), 1)  # draw in blue with thickness 1
@@ -101,7 +100,7 @@ def contours_extractor(binaryImage):
 
 def binary_converter(image):
     _, binary_image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    return cv2.bitwise_not(binary_image) # ocho value trash
+    return cv2.bitwise_not(binary_image)  # ocho value trash
 
 
 def take_biggest_object(binary_image):
@@ -133,32 +132,79 @@ def apply_mask(original_image, binary_image):
     return masked_image
 
 
-datasetPath = 'Dataset/Data/24_chromosomes_object/cropped_chromosomes/'
-annotationsPath = 'Dataset/Data/24_chromosomes_object/annotations/'
-image_path = (datasetPath + "chromosome_2.jpg")
+def complete_preprocess_single(image_path,
+                               base_output_dir='Dataset/Data/24_chromosomes_object/preprocessed_classified'):
+    preprocessed_image = preprocess_image(image_path)
+
+    binaryImage, contours, contoursimage = clean_image(preprocessed_image)
+
+    # segmented_image = separate_overlapping_chromosomes(contoursimage)
+
+    noobj = take_biggest_object(binaryImage)
+
+    masked_image = apply_mask(preprocessed_image, noobj)
+
+    resized_image = image_resize(masked_image,
+                                 (224,
+                                  224))
+
+    # Extract chromosome number from filename
+    filename = os.path.basename(image_path)
+    chromo_number = filename.split('_')[-1].split('.')[0]
+
+    # Construct the output directory path for the specific chromosome
+    output_dir = os.path.join(base_output_dir, f"chromo{chromo_number}")
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Save the preprocessed image in the specific directory
+    preprocessed_image_path = os.path.join(output_dir, filename)
+    cv2.imwrite(preprocessed_image_path, resized_image)
+
+
+def preprocess_directory(input_dir, output_dir):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Iterate through all files in the input directory
+    for file_name in tqdm(os.listdir(input_dir), desc="Preprocessing images"):
+        file_path = os.path.join(input_dir, file_name)
+        if os.path.isfile(file_path):
+            try:
+                # Apply preprocessing to each image
+                complete_preprocess_single(file_path, output_dir)
+            except FileNotFoundError as e:
+                print(e)
+            except Exception as e:
+                print(f"Failed to process image {file_name}: {e}")
+
+
+"""
 original_image = cv2.imread(image_path)
 original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 
 preprocessed_image = preprocess_image(image_path)
 
-binaryImage, contours, contoursimage = clean_image(preprocessed_image)  # TODO non fa una sega
+binaryImage, contours, contoursimage = clean_image(preprocessed_image) 
 
 segmented_image = separate_overlapping_chromosomes(contoursimage)
 
 noobj = take_biggest_object(binaryImage)
 
-#display_images(binaryImage, noobj)
+# display_images(binaryImage, noobj)
 
-#display_images(contoursimage, segmented_image)
+# display_images(contoursimage, segmented_image)
 
-#display_images(contoursimage, binaryImage)
+# display_images(contoursimage, binaryImage)
 
-#display_images(original_image, preprocessed_image)
+# display_images(original_image, preprocessed_image)
 
 masked_image = apply_mask(preprocessed_image, noobj)
 
-#display_images(preprocessed_image, masked_image)
+# display_images(preprocessed_image, masked_image)
 
-resized_image = image_resize(masked_image)
+resized_image = image_resize(masked_image,
+                             (160, 160))  
 
 display_images(masked_image, resized_image)
+"""
