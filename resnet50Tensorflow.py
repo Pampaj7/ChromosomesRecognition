@@ -1,16 +1,11 @@
-from tensorflow.keras.models import Model
-
+from keras.models import Model
+import tensorflow as tf
 from keras.layers import Dense, Flatten
 from keras.callbacks import EarlyStopping
-
 from keras.losses import categorical_crossentropy
-from keras.optimizers import adam
-
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
-
 import numpy as np
 import cv2
-
 from sklearn.model_selection import StratifiedKFold
 from PIL import Image
 import random
@@ -18,11 +13,11 @@ from sklearn.utils import shuffle
 import os
 
 # super parameters
-batch_size = 40
+batch_size = 16
 early_stop_patience = 14
 epochs = 100
 split_symbol = '/'
-lr = 0.0005
+lr = 0.1
 
 # fixed parameters
 num_classes = 24
@@ -64,7 +59,7 @@ def training(model, x_train, y_train, x_test, y_test, model_name):
     # multi_gpu_model(model, gpus=2) # if you have multi GPU
     parallel_model.compile(loss=categorical_crossentropy,
                            # optimizer=rmsprop(lr=lr, decay=0.9),
-                           optimizer=adam(lr=lr),
+                           optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.01),
                            # optimizer=optimizer,   # vgg16
                            metrics=['accuracy'])
     early_stop_callback = EarlyStopping(monitor='val_acc',
@@ -198,7 +193,5 @@ def run_train(mode):
     print("Accuracy: %0.2f (+/- %0.2f)" % (np.array(scores).mean(), np.array(scores).std() * 2))
 
 
-if __name__ == '__name__':
-    # cda, straighten, or None
-    mode = 'None'
-    run_train(mode)
+mode = 'cda'
+run_train(mode)
