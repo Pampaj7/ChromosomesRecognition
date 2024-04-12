@@ -2,6 +2,8 @@ import cv2
 import os
 import annotationExtraction as ae
 from tqdm import tqdm
+
+
 def single_chromo_extractor(image_path, annotations, output_dir, image_file):
     # Check if the image file exists and is valid
     if not os.path.exists(image_path) or not os.path.isfile(image_path):
@@ -50,6 +52,3 @@ def complete_extractor(image_dir, annotations_dir, output_dir):
             single_chromo_extractor(image_path, annotations, output_dir, image_file)
         else:
             print(f"No annotation for image {image_file}")
-
-
-

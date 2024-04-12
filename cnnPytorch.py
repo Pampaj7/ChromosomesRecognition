@@ -3,11 +3,11 @@ import torch.nn as nn
 from torchvision import models, transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet18, ResNet18_Weights
 from tqdm import tqdm
 
 # Load the pre-trained ResNet-50 model
-model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
 
 # Freeze all layers
 for param in model.parameters():
@@ -39,20 +39,20 @@ valid_transform = transforms.Compose([
 ])
 
 # Load datasets
-train_dataset = ImageFolder('Dataset/Data/24_chromosomes_object/preprocessed_images', transform=train_transform)
-valid_dataset = ImageFolder('Dataset/Data/24_chromosomes_object/preprocessed_images', transform=valid_transform)
+train_dataset = ImageFolder('Dataset/DataGood/ChromoClassified/', transform=train_transform)
+valid_dataset = ImageFolder('Dataset/DataGood/ChromoClassified/', transform=valid_transform)
 
 # DataLoader
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-valid_loader = DataLoader(valid_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=512, shuffle=True)
+valid_loader = DataLoader(valid_dataset, batch_size=512, shuffle=False)
 
 # Define loss function and optimizer
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.fc.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.fc.parameters(), lr=0.1)
 
 
 # Training loop
-def train_model(model, criterion, optimizer, num_epochs=100):
+def train_model(model, criterion, optimizer, num_epochs=10):
     model.to(device)
     for epoch in tqdm(range(num_epochs), desc='Epoch Progress', unit='epoch'):
         model.train()  # Set model to training mode
@@ -85,7 +85,7 @@ def train_model(model, criterion, optimizer, num_epochs=100):
 
 
 # Specify the device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "mps")
 
 # Start the training process
 train_model(model, criterion, optimizer)
