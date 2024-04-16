@@ -8,6 +8,7 @@ from torchvision import transforms
 from torchvision.models import Inception_V3_Weights
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
+import matplotlib.pyplot as plt
 
 data_dir = 'dataset/DataGood/ChromoClassified'  # Update with your dataset directory
 num_classes = 24  # Update with the number of chromosome classes
@@ -31,7 +32,6 @@ inception.to(device)
 
 inception.train()
 
-
 # Define transformations
 transform = transforms.Compose([
     transforms.Resize((299, 299)),
@@ -54,8 +54,14 @@ train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
+# Lists to store metrics for plotting
+train_losses = []
+train_accuracies = []
+validation_losses = []
+validation_accuracies = []
+
 # Training loop
-num_epochs = 1
+num_epochs = 2
 for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     inception.train()
     running_loss = 0.0
@@ -63,7 +69,7 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     total_predictions = 0
 
     # Training phase
-    for inputs, labels in tqdm(train_loader, desc='Training Batch'):
+    for inputs, labels in tqdm(train_loader, desc='Training Batch', leave=False):
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs, aux_outputs = inception(inputs)
@@ -75,10 +81,11 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
         total_predictions += labels.size(0)
         running_loss += loss.item()
 
-    # Calculate and display metrics
+    # Calculate and store training metrics
     epoch_loss = running_loss / len(train_loader)
     epoch_accuracy = correct_predictions / total_predictions
-    print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy:.4f}")
+    train_losses.append(epoch_loss)
+    train_accuracies.append(epoch_accuracy)
 
     # Validation phase
     inception.eval()
@@ -95,8 +102,31 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
             correct_val += (predicted == labels).sum().item()
             total_val += labels.size(0)
 
+    # Calculate and store validation metrics
     validation_accuracy = correct_val / total_val
-    print(f"Validation Loss: {validation_loss / len(validation_loader):.4f}, Accuracy: {validation_accuracy:.4f}")
+    validation_losses.append(validation_loss / len(validation_loader))
+    validation_accuracies.append(validation_accuracy)
+
+# Plotting the training and validation metrics
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(train_losses, label='Training Loss')
+plt.plot(validation_losses, label='Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Training and Validation Loss')
+plt.legend()
+
+plt.subplot(1, 2, 2)
+plt.plot(train_accuracies, label='Training Accuracy')
+plt.plot(validation_accuracies, label='Validation Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.title('Training and Validation Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
 
 # Testing phase
 inception.eval()
