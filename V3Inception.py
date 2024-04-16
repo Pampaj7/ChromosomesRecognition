@@ -9,15 +9,15 @@ from torchvision.models import Inception_V3_Weights
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 
-batch_size = 16
 data_dir = 'dataset/DataGood/ChromoClassified'  # Update with your dataset directory
+num_classes = 24  # Update with the number of chromosome classes
 
 # Load pre-trained InceptionV3 model
 inception = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
 
 # Modify the last layer for your specific task TODO
 num_ftrs = inception.fc.in_features
-inception.fc = torch.nn.Linear(num_ftrs, 24)  # num_classes is the number of chromosome classes
+inception.fc = torch.nn.Linear(num_ftrs, num_classes)  # num_classes is the number of chromosome classes
 
 # Define your loss function
 criterion = nn.CrossEntropyLoss()
@@ -31,7 +31,6 @@ inception.to(device)
 
 inception.train()
 
-num_epochs = 10
 
 # Define transformations
 transform = transforms.Compose([
@@ -50,13 +49,13 @@ test_size = len(full_dataset) - train_size - validation_size
 train_dataset, validation_dataset, test_dataset = random_split(full_dataset, [train_size, validation_size, test_size])
 
 # DataLoader setup
-batch_size = 16
+batch_size = 32
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
 # Training loop
-num_epochs = 10
+num_epochs = 1
 for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     inception.train()
     running_loss = 0.0
@@ -116,3 +115,6 @@ with torch.no_grad():
 
 test_accuracy = correct_test / total_test
 print(f"Test Loss: {test_loss / len(test_loader):.4f}, Accuracy: {test_accuracy:.4f}")
+
+# Save the trained model
+torch.save(inception.state_dict(), 'Chromo_model.pth')
