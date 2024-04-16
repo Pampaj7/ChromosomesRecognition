@@ -6,14 +6,13 @@ import numpy as np
 import cv2
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import roc_auc_score, accuracy_score
-from sklearn.model_selection import StratifiedKFold,cross_val_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 from PIL import Image
 import random
 from sklearn.utils import shuffle
 import os
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
-
 
 # super parameters
 batch_size = 40
@@ -55,17 +54,18 @@ def get_origin_data():
     # plot_model(model, to_file=u'../model/inception_residual_network.png')
     return model """
 
+
 ################################################# test con inceptionV3 #########################################
 def inception_residual_network(input_shape, num_classes):
     # Load pre-trained InceptionResNetV2 model from torchvision
     inception = models.inception_v3(pretrained=True)
-    
+
     # Modify the model to match the TensorFlow architecture
     # Remove the final layer and set the pre-trained weights as not trainable
     inception.fc = nn.Identity()
     for param in inception.parameters():
         param.requires_grad = False
-    
+
     # Define the new final layer
     model = nn.Sequential(
         inception,
@@ -74,19 +74,23 @@ def inception_residual_network(input_shape, num_classes):
         nn.Linear(2048, num_classes),  # Assuming the output of InceptionResNetV2 is 2048
         nn.Softmax(dim=1)
     )
-    
+
     return model
+
+
 ################################################################################################################
 ################################################### test con resnet 50 #########################################
 def resnet50_chromosome_classifier(num_classes):
     # Load pre-trained ResNet-50 model from torchvision
     resnet = models.resnet50(pretrained=True)
-    
+
     # Modify the model to fit the number of classes in your task
     num_features = resnet.fc.in_features
     resnet.fc = nn.Linear(num_features, num_classes)
-    
+
     return resnet
+
+
 ################################################################################################################
 
 
@@ -125,23 +129,25 @@ def resnet50_chromosome_classifier(num_classes):
     parallel_model.save(u'../model/' + model_name + '.' + str(val_acc) + '.h5')
     return parallel_model """
 
-def training(model, x_train, y_train, x_test, y_test, model_name, batch_size=32, epochs=10, lr=0.001, early_stop_patience=3):
+
+def training(model, x_train, y_train, x_test, y_test, model_name, batch_size=32, epochs=10, lr=0.001,
+             early_stop_patience=3):
     # Assuming x_train, y_train, x_test, y_test are numpy arrays or PyTorch tensors
-    
+
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr)
-    
+
     # Convert data to PyTorch tensors and create DataLoader
     train_dataset = TensorDataset(torch.tensor(x_train), torch.tensor(y_train))
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataset = TensorDataset(torch.tensor(x_test), torch.tensor(y_test))
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    
+
     # Move model to device (e.g., GPU)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    
+
     best_val_acc = 0.0
     for epoch in range(epochs):
         # Training loop
@@ -164,8 +170,8 @@ def training(model, x_train, y_train, x_test, y_test, model_name, batch_size=32,
                 _, preds = torch.max(outputs, 1)
                 val_preds.extend(preds.cpu().numpy())
             val_acc = accuracy_score(y_test, val_preds)
-            print(f"Epoch {epoch+1}/{epochs}, Validation Accuracy: {val_acc:.4f}")
-            
+            print(f"Epoch {epoch + 1}/{epochs}, Validation Accuracy: {val_acc:.4f}")
+
             # Check for early stopping
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
@@ -233,7 +239,7 @@ def run_train(mode):
             val_x = np.array(val_x)
             val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
             val_y = np.array(val_y)
-        else: # mode = None
+        else:  # mode = None
             for (x, y) in zip(train_data, train_target):
                 label_y = np.zeros(24)
                 label_y[y] = 1
@@ -280,7 +286,6 @@ def run_train(mode):
         model = None
     print(scores)
     print("Accuracy: %0.2f (+/- %0.2f)" % (np.array(scores).mean(), np.array(scores).std() * 2))
-
 
 
 # cda, straighten, or None
