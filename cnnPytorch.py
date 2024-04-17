@@ -39,8 +39,8 @@ valid_transform = transforms.Compose([
 ])
 
 # Load datasets
-train_dataset = ImageFolder('Dataset/DataGood/ChromoClassified/', transform=train_transform)
-valid_dataset = ImageFolder('Dataset/DataGood/ChromoClassified/', transform=valid_transform)
+train_dataset = ImageFolder('dataset/DataGood/chromoClassified/', transform=train_transform)
+valid_dataset = ImageFolder('dataset/DataGood/chromoClassified/', transform=valid_transform)
 
 # DataLoader
 train_loader = DataLoader(train_dataset, batch_size=512, shuffle=True)

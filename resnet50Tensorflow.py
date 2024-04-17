@@ -1,4 +1,4 @@
-from keras.models import Model
+from tensorflow.keras.models import Model
 import tensorflow as tf
 from keras.layers import Dense, Flatten
 from keras.callbacks import EarlyStopping
@@ -59,7 +59,7 @@ def training(model, x_train, y_train, x_test, y_test, model_name):
     # multi_gpu_model(model, gpus=2) # if you have multi GPU
     parallel_model.compile(loss=categorical_crossentropy,
                            # optimizer=rmsprop(lr=lr, decay=0.9),
-                           optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=0.01),
+                           optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
                            # optimizer=optimizer,   # vgg16
                            metrics=['accuracy'])
     early_stop_callback = EarlyStopping(monitor='val_acc',

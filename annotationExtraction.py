@@ -59,7 +59,7 @@ source_dir = 'dataset/DataGood/origin/'  # Change this to your source directory
 target_dir = 'dataset/DataGood/ChromoClassified'  # Change this to your target directory
 
 
-# sort_images_by_class(source_dir, target_dir)
+#sort_images_by_class(source_dir, target_dir)
 
 def convert_tiff_to_jpeg(source_directory="dataset/DataGood/origin", target_directory="dataset/DataGood/origin_jpeg"):
     # Ensure the target directory exists
@@ -86,4 +86,5 @@ def convert_tiff_to_jpeg(source_directory="dataset/DataGood/origin", target_dire
                 print(f"Converted {filename} to {new_filename} and saved to {target_directory}")
 
 
-convert_tiff_to_jpeg()
+
+#convert_tiff_to_jpeg()

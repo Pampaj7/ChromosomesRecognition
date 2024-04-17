@@ -14,7 +14,7 @@ inception.load_state_dict(torch.load('Chromo_model.pth'))
 inception.eval()  # Set the model to evaluation mode
 
 # Load a single image
-image_path = 'dataset/DataGood/ChromoClassified/2/7991562828257.811051.2.tiff'
+image_path = 'dataset/DataGood/ChromoClassified/6/43961562828258.8491929.6.tiff'
 image = Image.open(image_path)
 
 # Convert grayscale image to RGB

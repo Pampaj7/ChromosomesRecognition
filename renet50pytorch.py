@@ -9,14 +9,14 @@ from torchvision.models import Inception_V3_Weights
 from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
+from torchvision.models import resnet50, ResNet50_Weights
 
-data_dir = 'dataset/Data/ChromoClassified'  # Update with your dataset directory
-#data_dir = 'Dataset/Data/24_chromosomes_object/preprocessed_images'  # Update with your dataset directory
 
-num_classes = 50  # Update with the number of chromosome classes
+data_dir = 'dataset/DataGood/ChromoClassified'  # Update with your dataset directory
+num_classes = 24  # Update with the number of chromosome classes
 
 # Load pre-trained InceptionV3 model
-inception = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
+inception = resnet50(weights=ResNet50_Weights.DEFAULT)
 
 # Modify the last layer for your specific task TODO
 num_ftrs = inception.fc.in_features
@@ -36,19 +36,18 @@ inception.train()
 
 # Define transformations
 transform = transforms.Compose([
-    transforms.Resize((299, 299)),
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485], std=[0.229])
 ])
-"""
+""" #possible augmentations
 train_transform = transforms.Compose([
-    transforms.RandomRotation(30),
-    transforms.RandomResizedCrop(224, scale=(0.8, 1.0), ratio=(0.9, 1.1)),
-    #transforms.ColorJitter(brightness=0.1, contrast=0.1),
+    transforms.Resize((299, 299)),
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomRotation(15),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    transforms.Normalize(mean=[0.485], std=[0.229])
 ])"""
-
 
 
 # Load dataset and apply transformations
@@ -84,7 +83,7 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     for inputs, labels in tqdm(train_loader, desc='Training Batch', leave=False):
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
-        outputs, aux_outputs = inception(inputs)
+        outputs = inception(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
@@ -126,7 +125,7 @@ plt.plot(train_losses, label='Training Loss')
 plt.plot(validation_losses, label='Validation Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Training and Validation Loss')
+plt.title('Training and Validation Loss resnetS')
 plt.legend()
 
 plt.subplot(1, 2, 2)
@@ -160,4 +159,4 @@ test_accuracy = correct_test / total_test
 print(f"Test Loss: {test_loss / len(test_loader):.4f}, Accuracy: {test_accuracy:.4f}")
 
 # Save the trained model
-torch.save(inception.state_dict(), 'Chromo_model.pth')
+torch.save(inception.state_dict(), 'Chromo_model_resnet.pth')

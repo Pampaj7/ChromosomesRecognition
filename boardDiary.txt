@@ -23,6 +23,8 @@ Fully Connected Layers: These layers integrate the high-level features learned b
 Activation Functions: Use ReLU or advanced variants like Leaky ReLU for hidden layers due to their efficiency. ***The output layer should use a softmax activation function for a multi-class classification problem.
 older for each class, with the images belonging to that class inside the folder.
 
+
+
 --To classify the chromosomes, we utilized the ResNet-50 pre-trained on ImageNet. In line with transfer learning,
 we fine-tuned the pre-trained network by replacing its last three layers, responsible for image classification,
 with a fully connected layer, a softmax layer, and a classification layer adapted to handle the number of chromosome classes.
