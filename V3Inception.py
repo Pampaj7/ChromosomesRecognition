@@ -10,10 +10,10 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 
-data_dir = 'dataset/Data/ChromoClassified'  # Update with your dataset directory
+data_dir = 'dataset/Data/ChromoClassified'  
 #data_dir = 'Dataset/Data/24_chromosomes_object/preprocessed_images'  # Update with your dataset directory
 
-num_classes = 50  # Update with the number of chromosome classes
+num_classes = 24  # Update with the number of chromosome classes
 
 # Load pre-trained InceptionV3 model
 inception = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
@@ -42,11 +42,15 @@ transform = transforms.Compose([
 ])
 """
 train_transform = transforms.Compose([
-    transforms.RandomRotation(30),
-    transforms.RandomResizedCrop(224, scale=(0.8, 1.0), ratio=(0.9, 1.1)),
-    #transforms.ColorJitter(brightness=0.1, contrast=0.1),
+    #transforms.RandomRotation(30),
+    transforms.ToPILImage(), #??
+    transforms.RandomApply([
+        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+        transforms.RandomAffine(degrees=5, translate=(0.05, 0.05), scale=(0.95, 1.05), shear=5),
+        transforms.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
+    ], p=0.9),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    transforms.Normalize(mean=[0.485], std=[0.229])
 ])"""
 
 
