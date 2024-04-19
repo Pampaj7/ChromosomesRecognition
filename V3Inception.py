@@ -10,6 +10,7 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 
+model_name = "V3Inception.pt"
 data_dir = 'dataset/DataGood/ChromoClassified'
 # data_dir = 'Dataset/Data/24_chromosomes_object/preprocessed_images'  # Update with your dataset directory
 
@@ -46,7 +47,7 @@ transform = transforms.Compose([
         transforms.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
     ], p=0.9),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485], std=[0.229])
+    transforms.Normalize(mean=[0.485, 0.485, 0.485], std=[0.229, 0.229, 0.229])
 ])
 
 # Load dataset and apply transformations
@@ -60,7 +61,7 @@ train_dataset, validation_dataset, test_dataset = random_split(
     full_dataset, [train_size, validation_size, test_size])
 
 # DataLoader setup
-batch_size = 16
+batch_size = 64
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 validation_loader = DataLoader(
     validation_dataset, batch_size=batch_size, shuffle=False)
@@ -71,8 +72,9 @@ train_losses, train_accuracies = [], []
 validation_losses, validation_accuracies = [], []
 test_losses, test_accuracies = [], []
 
+best_validation = 0.0
 # Training loop
-num_epochs = 2
+num_epochs = 5
 for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     inception.train()
     running_loss, correct_predictions, total_predictions = 0.0, 0, 0
@@ -112,27 +114,36 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     validation_losses.append(validation_loss / len(validation_loader))
     validation_accuracies.append(correct_val / total_val)
 
-    # Testing phase
-    test_loss, correct_test, total_test = 0.0, 0, 0
-    with torch.no_grad():
-        for inputs, labels in tqdm(test_loader, desc='Testing Batch'):
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = inception(inputs)
-            loss = criterion(outputs, labels)
-            test_loss += loss.item()
-            _, predicted = torch.max(outputs.data, 1)
-            correct_test += (predicted == labels).sum().item()
-            total_test += labels.size(0)
+    if correct_val/total_val > best_validation:
+        best_validation = correct_val/total_val
+        torch.save(inception.state_dict(), "models/" + model_name)
+    print('Best validation accuracy: ', best_validation)
 
-    test_losses.append(test_loss / len(test_loader))
-    test_accuracies.append(correct_test / total_test)
+
+inception.load_state_dict(torch.load("models/" + model_name))
+inception.eval()
+
+# Testing phase again
+
+test_loss, correct_test, total_test = 0.0, 0, 0
+with torch.no_grad():
+    for inputs, labels in tqdm(test_loader, desc='Testing Batch'):
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = inception(inputs)
+        loss = criterion(outputs, labels)
+        test_loss += loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        correct_test += (predicted == labels).sum().item()
+        total_test += labels.size(0)
+
+print(correct_test / total_test)
+
 
 # Plotting
 plt.figure(figsize=(12, 6))
 plt.subplot(1, 2, 1)
 plt.plot(train_losses, label='Training Loss')
 plt.plot(validation_losses, label='Validation Loss')
-plt.plot(test_losses, label='Test Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
 plt.title('Loss across Training, Validation, and Testing')
@@ -141,7 +152,6 @@ plt.legend()
 plt.subplot(1, 2, 2)
 plt.plot(train_accuracies, label='Training Accuracy')
 plt.plot(validation_accuracies, label='Validation Accuracy')
-plt.plot(test_accuracies, label='Test Accuracy')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 plt.title('Accuracy across Training, Validation, and Testing')
@@ -150,5 +160,3 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 plt.savefig('model_performance_metrics.png')
-
-torch.save(inception, "Chromo_model.pt")

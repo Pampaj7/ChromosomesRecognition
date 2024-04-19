@@ -39,8 +39,8 @@ train_dataset = ImageFolder('dataset/DataGood/ChromoClassified', transform=trans
 val_dataset = ImageFolder('dataset/DataGood/ChromoClassified', transform=transform)
 
 # Step 4: Create data loaders
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=64, shuffle=True)
 
 # Step 5: Define loss function and optimizer
 device = torch.device("cuda" if torch.cuda.is_available() else "mps")
@@ -49,7 +49,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
 # Step 6: Fine-tuning loop with tqdm
-num_epochs = 2
+num_epochs = 50
 for epoch in range(num_epochs):
     model.train()
     running_loss = 0.0
@@ -91,19 +91,5 @@ for epoch in range(num_epochs):
         f'Epoch [{epoch + 1}/{num_epochs}], Loss: {running_loss / len(train_loader):.4f}, Accuracy: {(100 * correct / total):.2f}%')
 
 # Save the model's state_dict
-torch.save(model.state_dict(), 'model_state_dict.pth')
-
-# Load the model's state dict into a new instance of the same model class
-inception = ModifiedInceptionV3(num_classes=24).to(device)
-inception.load_state_dict(torch.load('model_state_dict.pth'))
-inception.eval()  # Set to evaluation mode
-
-# Compare parameters between the original and loaded models
-for param_name in model.state_dict():
-    original_param = model.state_dict()[param_name]
-    loaded_param = inception.state_dict()[param_name]
-    if torch.equal(original_param, loaded_param):
-        print(f'Parameter {param_name} matches exactly.')
-    else:
-        print(f'Parameter {param_name} does not match.')
+torch.save(model, 'V3mod.pt')
 
