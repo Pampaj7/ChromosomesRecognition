@@ -14,6 +14,8 @@ import os
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
+
+
 # super parameters
 batch_size = 40
 early_stop_patience = 14
@@ -30,7 +32,8 @@ image_size = 224
 def get_origin_data():
     X = []
     Y = []
-    path = u'../origin'
+    path = './origin/'
+    #(dir_path, dir_names, file_names) = os.walk(path)
     for dir_path, dir_names, file_names in os.walk(path):
         for file_name in file_names:
             file_path = dir_path + split_symbol + file_name
@@ -40,6 +43,7 @@ def get_origin_data():
             Y.append(label_y)
     X = np.array(X)
     Y = np.array(Y)
+    
     return X, Y
 
 
@@ -56,11 +60,10 @@ def get_origin_data():
 
 
 ################################################# test con inceptionV3 #########################################
-def inception_residual_network(input_shape, num_classes):
+def inception_residual_network(num_classes=24):
     # Load pre-trained InceptionResNetV2 model from torchvision
     inception = models.inception_v3(pretrained=True)
-
-    # Modify the model to match the TensorFlow architecture
+    
     # Remove the final layer and set the pre-trained weights as not trainable
     inception.fc = nn.Identity()
     for param in inception.parameters():
@@ -80,7 +83,7 @@ def inception_residual_network(input_shape, num_classes):
 
 ################################################################################################################
 ################################################### test con resnet 50 #########################################
-def resnet50_chromosome_classifier(num_classes):
+def resnet50_chromosome_classifier(num_classes=24):
     # Load pre-trained ResNet-50 model from torchvision
     resnet = models.resnet50(pretrained=True)
 
@@ -151,6 +154,10 @@ def training(model, x_train, y_train, x_test, y_test, model_name, batch_size=32,
     best_val_acc = 0.0
     for epoch in range(epochs):
         # Training loop
+        #Il train funziona nel seguente modo: per ogni iterazione fa una predizione
+        #usando i pesi del modello pre trainato, valuta il valore della loss e in 
+        #base a quello va ad aggiornare i parametri del modello attraverso l'uso dell'
+        #optimizer facendo backprop
         model.train()
         for inputs, labels in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
@@ -185,6 +192,8 @@ def training(model, x_train, y_train, x_test, y_test, model_name, batch_size=32,
 
 
 # run
+
+
 def run_train(mode):
     X, Y = get_origin_data()
     print('X.shape, Y.shape:', X.shape, Y.shape)
@@ -196,28 +205,16 @@ def run_train(mode):
         val_data = X[val_idx]  # 20% of data
         train_target = Y[train_idx]
         val_target = Y[val_idx]
+        
         train_x, train_y = [], []
-        if mode == 'cda':
+        if mode == 'cda' or mode is None:
             for (x, y) in zip(train_data, train_target):
                 label_y = np.zeros(24)
                 label_y[y] = 1
-                for times in range(int(360 / 15)):
+                for times in range(int(360 / 15)):#!!!!!! qui chat gpt ha raggruppato None e cda, in none non c'era questo ciclo!!!!!!!
                     train_y.append(label_y)
                     train_x.append(np.array(Image.fromarray(x).rotate(times * 15)))
-
-            train_x = np.array(train_x)
-            train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
-            train_y = np.array(train_y)
-
-            val_x, val_y = [], []
-            for (x, y) in zip(val_data, val_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                val_y.append(label_y)
-                val_x.append(np.array(Image.fromarray(x).rotate(random.randint(0, 360))))
-            val_x = np.array(val_x)
-            val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
-            val_y = np.array(val_y)
+        
         elif mode == 'straighten':
             for (x, y) in zip(train_data, train_target):
                 label_y = np.zeros(24)
@@ -225,67 +222,55 @@ def run_train(mode):
                 train_y.append(label_y)
                 train_x.append(x)
 
-            train_x = np.array(train_x)
-            train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
-            train_y = np.array(train_y)
-
-            # prepare val data
-            val_x, val_y = [], []
-            for (x, y) in zip(val_data, val_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                val_y.append(label_y)
-                val_x.append(x)
-            val_x = np.array(val_x)
-            val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
-            val_y = np.array(val_y)
-        else:  # mode = None
-            for (x, y) in zip(train_data, train_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                train_y.append(label_y)
-                train_x.append(np.array(Image.fromarray(x).rotate(random.randint(0, 360))))
-            train_x = np.array(train_x)
-            train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
-            train_y = np.array(train_y)
-
-            # prepare val data
-            val_x, val_y = [], []
-            for (x, y) in zip(val_data, val_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                val_y.append(label_y)
-                val_x.append(np.array(Image.fromarray(x).rotate(random.randint(0, 360))))
-            val_x = np.array(val_x)
-            val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
-            val_y = np.array(val_y)
-
-        train_x = [cv2.cvtColor(i, cv2.COLOR_GRAY2BGR) for i in train_x]
         train_x = np.array(train_x)
-        val_x = [cv2.cvtColor(i, cv2.COLOR_GRAY2BGR) for i in val_x]
-        val_x = np.array(val_x)
-        train_x, train_y = shuffle(train_x, train_y)
+        train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
+        train_y = np.array(train_y)
 
+        # prepare val data
+        val_x, val_y = [], []
+        for (x, y) in zip(val_data, val_target):
+            label_y = np.zeros(24)
+            label_y[y] = 1
+            val_y.append(label_y)
+            if mode == 'cda' or mode is None:
+                val_x.append(np.array(Image.fromarray(x).rotate(random.randint(0, 360))))
+            else:
+                val_x.append(x)
+        val_x = np.array(val_x)
+        val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
+        val_y = np.array(val_y)
+
+        # Data augmentation if needed
+        if mode == 'cda' or mode is None:#!!!!!! chat gpt l'ha messa come condizione, il cinese la fa sempre
+            train_x, train_y = shuffle(train_x, train_y)
+            train_x = [cv2.cvtColor(i, cv2.COLOR_GRAY2BGR) for i in train_x]
+            train_x = np.array(train_x)
+            val_x = [cv2.cvtColor(i, cv2.COLOR_GRAY2BGR) for i in val_x]
+            val_x = np.array(val_x)
+
+        # Define and train model
         model = inception_residual_network((image_size, image_size, 3))
         model_name = 'inception_residual_network_cross_validation'
+        model = training(model, train_x, train_y, val_x, val_y, model_name)
+        
+        # Evaluate model
+        model.eval()
+        with torch.no_grad():
+            inputs = torch.tensor(val_x).float()
+            labels = torch.tensor(val_y.argmax(axis=1)).long()
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            val_acc = accuracy_score(labels, preds)
+            print(f"Validation Accuracy: {val_acc:.4f}")
+            scores.append(val_acc)
 
-        model = training(model=model,
-                         model_name=model_name,
-                         x_train=train_x,
-                         y_train=train_y,
-                         x_test=val_x,
-                         y_test=val_y)
-        # predict_data_processing(model=model,
-        #                         model_name= model_name + str(index),
-        #                         y_test=val_x,
-        #                         x_test=val_y)
         index += 1
-        test_score = model.evaluate(val_x, val_y, verbose=1)
-        scores.append(test_score[1])
-        print(test_score[1])
         model = None
+    
     print(scores)
     print("Accuracy: %0.2f (+/- %0.2f)" % (np.array(scores).mean(), np.array(scores).std() * 2))
+
+
 
 
 # cda, straighten, or None
