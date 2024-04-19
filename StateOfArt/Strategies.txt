@@ -1,0 +1,18 @@
+data augmentation for extend the dataset
+
+hyperparameter search - lr, batch
+
+some used inceptionv3 and VGG16
+
+tranfert learning?
+
+We removed the fully connected layers of VGG16 and wrote top layers suitable for chromosome binary classification
+ to apply transfer learning. We added two dropout layers, one next to the basic model and another next to the fully 
+ connected layer. There are a global average pooling layer and a batch normalization layer, which can deal with 
+ overfitting and other problems. The summary of the model is shown in Figure 3.5 and the visualization is shown
+
+Monte Carlo Dropout (MC Dropout)[1] and Deep Ensembles[16]??? dropout to prevent overfitting
+
+confusion matrix for idea
+
+Varifocal-Net??? looks the the best -- need to create the top levels
