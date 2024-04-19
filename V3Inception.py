@@ -10,17 +10,18 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, random_split
 import matplotlib.pyplot as plt
 
-data_dir = 'dataset/Data/ChromoClassified'  
-#data_dir = 'Dataset/Data/24_chromosomes_object/preprocessed_images'  # Update with your dataset directory
+data_dir = 'dataset/DataGood/ChromoClassified'
+# data_dir = 'Dataset/Data/24_chromosomes_object/preprocessed_images'  # Update with your dataset directory
 
 num_classes = 24  # Update with the number of chromosome classes
 
 # Load pre-trained InceptionV3 model
 inception = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
 
-# Modify the last layer for your specific task TODO
+# Modify the last layer for your specific task TODO need to improve
 num_ftrs = inception.fc.in_features
-inception.fc = torch.nn.Linear(num_ftrs, num_classes)  # num_classes is the number of chromosome classes
+# num_classes is the number of chromosome classes
+inception.fc = torch.nn.Linear(num_ftrs, num_classes)
 
 # Define your loss function
 criterion = nn.CrossEntropyLoss()
@@ -37,23 +38,16 @@ inception.train()
 # Define transformations
 transform = transforms.Compose([
     transforms.Resize((299, 299)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485], std=[0.229])
-])
-"""
-train_transform = transforms.Compose([
-    #transforms.RandomRotation(30),
-    transforms.ToPILImage(), #??
     transforms.RandomApply([
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-        transforms.RandomAffine(degrees=5, translate=(0.05, 0.05), scale=(0.95, 1.05), shear=5),
+        transforms.ColorJitter(
+            brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+        transforms.RandomAffine(degrees=5, translate=(
+            0.05, 0.05), scale=(0.95, 1.05), shear=5),
         transforms.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
     ], p=0.9),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485], std=[0.229])
-])"""
-
-
+])
 
 # Load dataset and apply transformations
 full_dataset = ImageFolder(root=data_dir, transform=transform)
@@ -62,27 +56,26 @@ full_dataset = ImageFolder(root=data_dir, transform=transform)
 train_size = int(0.7 * len(full_dataset))
 validation_size = int(0.1 * len(full_dataset))
 test_size = len(full_dataset) - train_size - validation_size
-train_dataset, validation_dataset, test_dataset = random_split(full_dataset, [train_size, validation_size, test_size])
+train_dataset, validation_dataset, test_dataset = random_split(
+    full_dataset, [train_size, validation_size, test_size])
 
 # DataLoader setup
-batch_size = 64
+batch_size = 16
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-validation_loader = DataLoader(validation_dataset, batch_size=batch_size, shuffle=False)
+validation_loader = DataLoader(
+    validation_dataset, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-# Lists to store metrics for plotting
-train_losses = []
-train_accuracies = []
-validation_losses = []
-validation_accuracies = []
+# Initialize lists for storing metrics
+train_losses, train_accuracies = [], []
+validation_losses, validation_accuracies = [], []
+test_losses, test_accuracies = [], []
 
 # Training loop
-num_epochs = 10
+num_epochs = 2
 for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     inception.train()
-    running_loss = 0.0
-    correct_predictions = 0
-    total_predictions = 0
+    running_loss, correct_predictions, total_predictions = 0.0, 0, 0
 
     # Training phase
     for inputs, labels in tqdm(train_loader, desc='Training Batch', leave=False):
@@ -93,21 +86,19 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
         loss.backward()
         optimizer.step()
         _, predicted = torch.max(outputs.data, 1)
+        # tensors = vectors of 0 and 1 is true
         correct_predictions += (predicted == labels).sum().item()
+        # for parallelization of neural network
         total_predictions += labels.size(0)
         running_loss += loss.item()
 
-    # Calculate and store training metrics
-    epoch_loss = running_loss / len(train_loader)
-    epoch_accuracy = correct_predictions / total_predictions
-    train_losses.append(epoch_loss)
-    train_accuracies.append(epoch_accuracy)
+    train_losses.append(running_loss / len(train_loader))
+    train_accuracies.append(correct_predictions / total_predictions)
 
     # Validation phase
     inception.eval()
-    validation_loss = 0.0
-    correct_val = 0
-    total_val = 0
+    validation_loss, correct_val, total_val = 0.0, 0, 0
+
     with torch.no_grad():
         for inputs, labels in validation_loader:
             inputs, labels = inputs.to(device), labels.to(device)
@@ -118,50 +109,46 @@ for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
             correct_val += (predicted == labels).sum().item()
             total_val += labels.size(0)
 
-    # Calculate and store validation metrics
-    validation_accuracy = correct_val / total_val
     validation_losses.append(validation_loss / len(validation_loader))
-    validation_accuracies.append(validation_accuracy)
+    validation_accuracies.append(correct_val / total_val)
 
-# Plotting the training and validation metrics
-plt.figure(figsize=(10, 5))
+    # Testing phase
+    test_loss, correct_test, total_test = 0.0, 0, 0
+    with torch.no_grad():
+        for inputs, labels in tqdm(test_loader, desc='Testing Batch'):
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = inception(inputs)
+            loss = criterion(outputs, labels)
+            test_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            correct_test += (predicted == labels).sum().item()
+            total_test += labels.size(0)
+
+    test_losses.append(test_loss / len(test_loader))
+    test_accuracies.append(correct_test / total_test)
+
+# Plotting
+plt.figure(figsize=(12, 6))
 plt.subplot(1, 2, 1)
 plt.plot(train_losses, label='Training Loss')
 plt.plot(validation_losses, label='Validation Loss')
+plt.plot(test_losses, label='Test Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss')
-plt.title('Training and Validation Loss')
+plt.title('Loss across Training, Validation, and Testing')
 plt.legend()
 
 plt.subplot(1, 2, 2)
 plt.plot(train_accuracies, label='Training Accuracy')
 plt.plot(validation_accuracies, label='Validation Accuracy')
+plt.plot(test_accuracies, label='Test Accuracy')
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
-plt.title('Training and Validation Accuracy')
+plt.title('Accuracy across Training, Validation, and Testing')
 plt.legend()
 
 plt.tight_layout()
 plt.show()
-plt.savefig('training_validation_metrics.png')
+plt.savefig('model_performance_metrics.png')
 
-# Testing phase
-inception.eval()
-test_loss = 0.0
-correct_test = 0
-total_test = 0
-with torch.no_grad():
-    for inputs, labels in tqdm(test_loader, desc='Testing Batch'):
-        inputs, labels = inputs.to(device), labels.to(device)
-        outputs = inception(inputs)
-        loss = criterion(outputs, labels)
-        test_loss += loss.item()
-        _, predicted = torch.max(outputs.data, 1)
-        correct_test += (predicted == labels).sum().item()
-        total_test += labels.size(0)
-
-test_accuracy = correct_test / total_test
-print(f"Test Loss: {test_loss / len(test_loader):.4f}, Accuracy: {test_accuracy:.4f}")
-
-# Save the trained model
-torch.save(inception.state_dict(), 'Chromo_model.pth')
+torch.save(inception, "Chromo_model.pt")

@@ -1,45 +1,50 @@
 from PIL import Image
 import torch
-from torchvision import transforms, models
-import torch.nn as nn
-from torchvision.models import Inception_V3_Weights
+from torchvision import transforms
 
-num_classes = 24
+# List of image filenames
+filenames = [
+    "dataset/DataGood/ChromoClassified/6/731562828257.7667353.6.tiff",
+    "dataset/DataGood/ChromoClassified/0/3451562828258.492685.0.tiff",
+    "dataset/DataGood/ChromoClassified/18/3351562828258.227251.18.tiff", 
+    "dataset/DataGood/ChromoClassified/21/2471562828258.225025.21.tiff", 
+    "dataset/DataGood/ChromoClassified/20/2461562828257.9331849.20.tiff", 
+    "dataset/DataGood/ChromoClassified/7/5601562828258.1498268.7.tiff", 
+    
+]
 
-# Load the saved model
-inception = models.inception_v3(weights=Inception_V3_Weights.IMAGENET1K_V1)
-# Assuming num_classes is known
-inception.fc = nn.Linear(inception.fc.in_features, num_classes)
-inception.load_state_dict(torch.load('Chromo_model.pth'))
-inception.eval()  # Set the model to evaluation mode
+# Load the TorchScript model
+inception = torch.load("Chromo_model.pt")
+inception.eval()
 
-# Load a single image
-image_path = 'dataset/DataGood/ChromoClassified/6/43961562828258.8491929.6.tiff'
-image = Image.open(image_path)
-
-# Convert grayscale image to RGB
-image_rgb = image.convert('RGB')
-
-# Apply the same transformations as in training
+# Inference transformations, ensuring grayscale images are treated correctly
 transform = transforms.Compose([
-    transforms.Resize((299, 299)),
+    transforms.Resize((299, 299)),  # Resize as per the training
+    # Convert grayscale and duplicate across 3 channels
+    transforms.Grayscale(num_output_channels=3),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485], std=[0.229])
+    # Normalize as RGB but all channels are the same
+    transforms.Normalize(mean=[0.485, 0.485, 0.485], std=[0.229, 0.229, 0.229])
 ])
 
-# Preprocess the image
-input_image = transform(image_rgb).unsqueeze(0)
 
-# Check if GPU is available
+# Check if GPU is available and move model to GPU if available
 device = torch.device("cuda:0" if torch.cuda.is_available() else "mps")
-
-# Move the model to the same device as the input tensor
 inception.to(device)
-input_image = input_image.to(device)
 
-# Perform inference
-with torch.no_grad():
-    output = inception(input_image)
-    _, predicted_class = torch.max(output, 1)
+# Iterate over the list of filenames
+for filename in filenames:
+    # Load and preprocess the image
+    image = Image.open(filename).convert('L')
+    input_image = transform(image).unsqueeze(0)
+    input_image = input_image.to(device)
 
-print("Predicted class:", predicted_class.item())
+    # Perform inference
+    with torch.no_grad():
+        outputs = inception(input_image)
+        # Extract only the main output if InceptionOutputs tuple is returned
+        main_output = outputs.logits if hasattr(
+            outputs, 'logits') else outputs[0]
+        _, predicted_class = torch.max(main_output, 1)
+
+    print(f"Predicted class for {filename}: {predicted_class.item()}")
