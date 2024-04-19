@@ -99,8 +99,9 @@ transform = transforms.Compose([
 device = torch.device("cuda:0" if torch.cuda.is_available() else "mps")
 inception.to(device)
 
+path = "dataset/DataGood/ChromoClassified/6/"
 # Iterate over the list of filenames
-for filename in filenames:
+for filename in os.listdir(path):
     # Load and preprocess the image
     image = Image.open(path + filename).convert('RGB')
     input_image = transform(image).unsqueeze(0)
