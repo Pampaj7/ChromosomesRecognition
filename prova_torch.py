@@ -14,11 +14,8 @@ import os
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> f72cbfa (aaaa)
 # super parameters
 batch_size = 40
 early_stop_patience = 14
@@ -66,12 +63,7 @@ def get_origin_data():
 def inception_residual_network(num_classes=24):
     # Load pre-trained InceptionResNetV2 model from torchvision
     inception = models.inception_v3(pretrained=True)
-<<<<<<< HEAD
-
-    # Modify the model to match the TensorFlow architecture
-=======
     
->>>>>>> f72cbfa (aaaa)
     # Remove the final layer and set the pre-trained weights as not trainable
     inception.fc = nn.Identity()
     for param in inception.parameters():
@@ -230,45 +222,6 @@ def run_train(mode):
                 train_y.append(label_y)
                 train_x.append(x)
 
-<<<<<<< HEAD
-            train_x = np.array(train_x)
-            train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
-            train_y = np.array(train_y)
-
-            # prepare val data
-            val_x, val_y = [], []
-            for (x, y) in zip(val_data, val_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                val_y.append(label_y)
-                val_x.append(x)
-            val_x = np.array(val_x)
-            val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
-            val_y = np.array(val_y)
-        else:  # mode = None
-            for (x, y) in zip(train_data, train_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                train_y.append(label_y)
-                train_x.append(np.array(Image.fromarray(x).rotate(random.randint(0, 360))))
-            train_x = np.array(train_x)
-            train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
-            train_y = np.array(train_y)
-
-            # prepare val data
-            val_x, val_y = [], []
-            for (x, y) in zip(val_data, val_target):
-                label_y = np.zeros(24)
-                label_y[y] = 1
-                val_y.append(label_y)
-                val_x.append(np.array(Image.fromarray(x).rotate(random.randint(0, 360))))
-            val_x = np.array(val_x)
-            val_x = val_x.reshape(val_x.shape[0], val_x.shape[1], val_x.shape[2], 1)
-            val_y = np.array(val_y)
-
-        train_x = [cv2.cvtColor(i, cv2.COLOR_GRAY2BGR) for i in train_x]
-=======
->>>>>>> f72cbfa (aaaa)
         train_x = np.array(train_x)
         train_x = train_x.reshape(train_x.shape[0], train_x.shape[1], train_x.shape[2], 1)
         train_y = np.array(train_y)
@@ -318,11 +271,8 @@ def run_train(mode):
     print("Accuracy: %0.2f (+/- %0.2f)" % (np.array(scores).mean(), np.array(scores).std() * 2))
 
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> f72cbfa (aaaa)
 # cda, straighten, or None
 mode = 'straighten'
 run_train(mode)
