@@ -27,7 +27,7 @@ filenames = [
     "Dataset/Data/24_chromosomes_object/cropped_chromosomes/103064_chromosome_3.jpg"
 ]
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "mps")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15': 7, '16': 8, '17': 9, '18': 10,
               '19': 11, '2': 12, '20': 13, '21': 14, '22': 15, '23': 16, '3': 17, '4': 18, '5': 19, '6': 20, '7': 21,
@@ -50,7 +50,10 @@ model_name = "models/V3ModInception.pt"
 inception = ModifiedInceptionV3(num_classes=24).to(device)
 
 # Load the TorchScript model
-inception.load_state_dict(torch.load(model_name))
+# Set map_location to 'cpu' if CUDA isn't available, otherwise use the default which is to load on the current CUDA device
+map_location = 'cpu' if not torch.cuda.is_available() else None
+inception.load_state_dict(torch.load(model_name, map_location=map_location))
+# for cpu machines add , map_location=torch.device('cpu')
 inception.eval()
 
 # Inference transformations, ensuring grayscale images are treated correctly
