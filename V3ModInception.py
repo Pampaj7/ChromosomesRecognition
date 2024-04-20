@@ -57,7 +57,7 @@ validation_losses, validation_accuracies = [], []
 test_losses, test_accuracies = [], []
 
 best_validation = 0
-num_epochs = 10
+num_epochs = 150
 for epoch in range(num_epochs):
     model.train()
     running_loss = 0.0
