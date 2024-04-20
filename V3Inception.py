@@ -52,6 +52,7 @@ transform = transforms.Compose([
 
 # Load dataset and apply transformations
 full_dataset = ImageFolder(root=data_dir, transform=transform)
+print(full_dataset.class_to_idx)
 
 # Train-test-validation split
 train_size = int(0.7 * len(full_dataset))
@@ -74,7 +75,7 @@ test_losses, test_accuracies = [], []
 
 best_validation = 0.0
 # Training loop
-num_epochs = 5
+num_epochs = 500
 for epoch in tqdm(range(num_epochs), desc='Epoch Progress'):
     inception.train()
     running_loss, correct_predictions, total_predictions = 0.0, 0, 0
@@ -158,5 +159,5 @@ plt.title('Accuracy across Training, Validation, and Testing')
 plt.legend()
 
 plt.tight_layout()
-plt.show()
 plt.savefig('model_performance_metrics.png')
+plt.show()

@@ -36,58 +36,6 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "mps")
 inception.to(device)
 inception.eval()
 
-testing_before = True
-if testing_before:
-    # Testing phase again
-    # Define transformations
-    transform = transforms.Compose([
-        transforms.Resize((299, 299)),
-        transforms.RandomApply([
-            transforms.ColorJitter(
-                brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-            transforms.RandomAffine(degrees=5, translate=(
-                0.05, 0.05), scale=(0.95, 1.05), shear=5),
-            transforms.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
-        ], p=0.9),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.485, 0.485], std=[0.229, 0.229, 0.229])
-    ])
-
-    data_dir = 'dataset/DataGood/ChromoClassified'
-    full_dataset = ImageFolder(root=data_dir, transform=transform)
-    print(full_dataset.class_to_idx)
-
-    train_size = int(0.7 * len(full_dataset))
-    validation_size = int(0.1 * len(full_dataset))
-    test_size = len(full_dataset) - train_size - validation_size
-    train_dataset, validation_dataset, test_dataset = random_split(
-        full_dataset, [train_size, validation_size, test_size])
-
-    # DataLoader setup
-    batch_size = 16
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(
-        validation_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    # Initialize lists for storing metrics
-    train_losses, train_accuracies = [], []
-    validation_losses, validation_accuracies = [], []
-    test_losses, test_accuracies = [], []
-
-    best_validation = 0.0
-    correct_test, total_test = 0.0, 0
-    print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-    with torch.no_grad():
-        for inputs, labels in tqdm(test_loader, desc='Testing Batch'):
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = inception(inputs)
-            _, predicted = torch.max(outputs.data, 1)
-            correct_test += (predicted == labels).sum().item()
-            total_test += labels.size(0)
-
-    print(correct_test / total_test)
-
 # Inference transformations, ensuring grayscale images are treated correctly
 transform = transforms.Compose([
     transforms.Resize((299, 299)),
