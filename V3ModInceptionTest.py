@@ -4,27 +4,14 @@ from torchvision.models import Inception_V3_Weights
 import torchvision.models as models
 from torchvision import transforms
 import torch.nn as nn
+from ModifiedModels import *
 
 # List of image filenames
 filenames = [
-    "dataset/DataGood/ChromoClassified/6/731562828257.7667353.6.tiff",
-    "dataset/DataGood/ChromoClassified/0/3451562828258.492685.0.tiff",
-    "dataset/DataGood/ChromoClassified/18/3351562828258.227251.18.tiff",
-    "dataset/DataGood/ChromoClassified/21/2471562828258.225025.21.tiff",
-    "dataset/DataGood/ChromoClassified/20/2461562828257.9331849.20.tiff",
-    "dataset/DataGood/ChromoClassified/7/5601562828258.1498268.7.tiff",
-    "dataset/DataGood/ChromoClassified/15/121562828259.1321106.15.tiff",
-    "dataset/DataGood/ChromoClassified/8/6871562828259.130795.8.tiff",
-    "dataset/DataGood/ChromoClassified/3/2301562828258.5252967.3.tiff",
-    "dataset/DataGood/ChromoClassified/0/7501562828258.235663.0.tiff",
-    "dataset/DataGood/ChromoClassified/0/16531562828258.3343055.0.tiff",
-    "dataset/DataGood/ChromoClassified/23/3241562828258.549619.23.tiff",
-    "dataset/DataGood/ChromoClassified/23/41861562828257.9127784.23.tiff",
-    "dataset/DataGood/ChromoClassified/23/80611562828258.843462.23.tiff",
-    "dataset/DataGood/ChromoClassified/15/10761562828258.4776962.15.tiff",
-    "dataset/DataGood/ChromoClassified/14/12691562828259.3142326.14.tiff",
-    "Dataset/Data/24_chromosomes_object/preprocessed_images/chromo0/103111_chromosome_0.jpg",
-    "Dataset/Data/24_chromosomes_object/cropped_chromosomes/103064_chromosome_3.jpg"
+    "origin/01562828258.8049057.5.tiff", "origin/21562828259.126213.3.tiff", "origin/431562828258.5368197.3.tiff", "origin/691562828258.3360758.5.tiff", "origin/731562828258.3894138.7.tiff",
+    "origin/1351562828258.40041.5.tiff", "origin/311562828259.323763.2.tiff", "origin/2461562828257.9331849.20.tiff", "origin/4071562828258.0701625.14.tiff",
+    "origin/4671562828258.9595804.3.tiff", "origin/6421562828258.7006133.8.tiff", "origin/9011562828258.2214892.9.tiff", "origin/14401562828258.2325635.9.tiff",
+    
 ]
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -34,26 +21,22 @@ class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15':
               '8': 22, '9': 23}
 index_to_class = {v: k for k, v in class_dict.items()}
 
+def chooseModel(model):
+    #
+    # 0 = ModifiedInceptionV3
+    # 1 = ModifiedInceptionV3Paper
+    if( model == 0):
+        return ModifiedInceptionV3(24)
+    elif( model == 1):
+        return ModifiedInceptionV3Paper(24)
 
-class ModifiedInceptionV3(nn.Module):
-    def __init__(self, num_classes):
-        super(ModifiedInceptionV3, self).__init__()
-        self.inception = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
-        self.inception.Conv2d_1a_3x3.conv = nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), bias=False)
-        self.inception.fc = nn.Linear(in_features=2048, out_features=num_classes, bias=True)
-
-    def forward(self, x):
-        return self.inception(x)
-
-
-model_name = "models/V3ModInception.pt"
-inception = ModifiedInceptionV3(num_classes=24).to(device)
+model_name = "ChromosomesRecognition/models/V3ModInception.pt"
+inception = chooseModel(0).to(device)
 
 # Load the TorchScript model
 # Set map_location to 'cpu' if CUDA isn't available, otherwise use the default which is to load on the current CUDA device
 map_location = 'cpu' if not torch.cuda.is_available() else None
 inception.load_state_dict(torch.load(model_name, map_location=map_location))
-# for cpu machines add , map_location=torch.device('cpu')
 inception.eval()
 
 # Inference transformations, ensuring grayscale images are treated correctly
@@ -64,9 +47,6 @@ transform = transforms.Compose([
 ])
 
 # Check if GPU is available and move model to GPU if available
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-inception.to(device)
-
 path = "dataset/DataGood/ChromoClassified/18/"
 
 # Iterate over the list of filenames

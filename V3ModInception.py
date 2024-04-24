@@ -51,8 +51,6 @@ def processData(batch_size):
     return train_loader, val_loader, test_loader
 
 
-model = chooseModel(0)
-
 def train(model, train_loader, val_loader, test_loader, lr, epochs):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
@@ -134,7 +132,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs):
     return  train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies    
 
 
-def plot(train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies):
+def plot(model,train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies):
 # Plotting
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
@@ -163,7 +161,7 @@ def pipeline(model_type):
     model = chooseModel(0)
     train_loader, val_loader, test_loader = processData(batch_size = 64)
     train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=150)
-    plot(train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
+    plot(model,train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
 
 
 pipeline(0)
