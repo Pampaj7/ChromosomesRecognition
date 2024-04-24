@@ -43,3 +43,17 @@ Deployment: Make your model available for use with new images, possibly integrat
 For the CNN approach, which is often very effective for image-related tasks, you would need a significant number of labeled images. You can either label them manually or use an existing dataset if available. Remember, the quality and quantity of your data are crucial for training an effective model. Also, the specific architecture of the neural network (like U-Net for segmentation) can be critical depending on the complexity of your images and the desired accuracy.
 
 Would you need assistance with specific parts of this process, like code for preprocessing, or advice on model architecture?
+
+
+Hyperparameter:
+batch size, 16, 32, 64 gay
+learning rate, 0.001, 0.01, 0.1
+number of epochs, 10
+optimizer, Adam, SGD, RMSprop
+early stopping, yes, no
+cross-validation, 5-fold, 10-fold
+evaluation metric, accuracy, precision, recall, F1 score
+scheduler
+wheight decay
+padding
+fai grid search
