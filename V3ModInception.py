@@ -15,6 +15,8 @@ def chooseModel(model):
     #
     # 0 = ModifiedInceptionV3
     # 1 = ModifiedInceptionV3Paper
+    # 2 = ModifiedVgg16
+    # 3 = ModifiedResnet
     if( model == 0):
         return ModifiedInceptionV3(24)
     elif( model == 1):

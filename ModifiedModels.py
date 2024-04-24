@@ -44,4 +44,20 @@ class ModifiedInceptionV3(nn.Module):
 
     def forward(self, x):
         return self.inception(x)
+    
+
+class ModifiedResNet(nn.Module):
+    def __init__(self, num_classes):
+        super(ModifiedResNet, self).__init__()
+        
+        resnet50 = models.resnet50(pretrained=True)
+        num_features = resnet50.fc.in_features
+        resnet50.fc = nn.Linear(num_features, num_classes)
+        for param in resnet50.parameters():
+            param.requires_grad = False
+        
+        self.model = resnet50
+
+    def forward(self, x):
+        return self.model(x)
 
