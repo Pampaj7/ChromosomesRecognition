@@ -46,7 +46,7 @@ Would you need assistance with specific parts of this process, like code for pre
 
 
 Hyperparameter:
-batch size, 16, 32, 64 gay
+batch size, 16, 32, 64
 learning rate, 0.001, 0.01, 0.1
 number of epochs, 10
 optimizer, Adam, SGD, RMSprop
@@ -55,5 +55,5 @@ cross-validation, 5-fold, 10-fold
 evaluation metric, accuracy, precision, recall, F1 score
 scheduler
 wheight decay
-padding
+padding done
 fai grid search

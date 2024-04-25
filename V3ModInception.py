@@ -25,10 +25,18 @@ def chooseModel(model_type):
         raise ValueError("Unknown model_type")
 
 
-def processData(batch_size):
+# took input 224x224
+def processData(batch_size, modelname):
     # create the data loader to use during train
+    if modelname == "V3ModInceptionPaper" or modelname == "V3ModInception":
+        pad = (299 - 224) // 2
+        res = 299  # needed cause the approximation of the inception model
+    else:
+        pad = 0
+        res = 224
     transform = transforms.Compose([
-        transforms.Resize((299, 299)),  # TODO do padding for v3
+        transforms.Pad((pad, pad), fill=0, padding_mode='constant'),
+        transforms.Resize(res),
         transforms.Grayscale(num_output_channels=3),
         transforms.RandomApply([
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
@@ -188,25 +196,52 @@ def model_summary(model):
     print(f"Total trainable parameters: {total_params}")
 
 
-def load_metrics(model_name):
+def load_all_metrics(model_name):
     with open(f'models/{model_name}_metrics.json', 'r') as f:
         metrics = json.load(f)
-    return (metrics['train_losses'], metrics['train_accuracies'],
-            metrics['validation_losses'], metrics['validation_accuracies'],
-            metrics['test_losses'], metrics['test_accuracies'])
+    return metrics
 
 
 def pipeline(model_type):
     model = chooseModel(model_type)
     # model_summary(model)
-    train_loader, val_loader, test_loader = processData(batch_size=16)
+    train_loader, val_loader, test_loader = processData(batch_size=16, modelname=model.name)
     train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
-        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=10)
+        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=30)
 
     plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
 
 
 pipeline(0)
-pipeline(1)
+# pipeline(1) # TODO need to fix the model
 pipeline(2)
 pipeline(3)
+
+# Names of the models you have saved metrics for
+model_names = ["V3ModInception",
+               # "V3ModInceptionPaper",
+               "VGG16",
+               "ResNet50"]
+metrics_labels = ['train_losses',
+                  'train_accuracies',
+                  'validation_losses',
+                  'validation_accuracies',
+                  'test_losses',
+                  'test_accuracies']
+
+# Load metrics for each model and prepare the plots
+fig, axs = plt.subplots(2, 3, figsize=(15, 10))  # 2x3 grid for six metrics
+fig.suptitle('Comparison of Training Metrics Across Models')
+
+for i, metric_label in enumerate(metrics_labels):
+    ax = axs[i//3, i%3]  # Determine the subplot position
+    for name in model_names:
+        metrics = load_all_metrics(name)
+        ax.plot(metrics[metric_label], label=name)
+        ax.set_title(metric_label.replace('_', ' ').capitalize())
+        ax.set_xlabel('Epochs')
+        ax.set_ylabel(metric_label.split('_')[1].capitalize())
+    ax.legend()
+
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.show()

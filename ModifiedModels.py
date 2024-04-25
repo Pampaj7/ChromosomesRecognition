@@ -19,9 +19,9 @@ class ModifiedInceptionV3Paper(nn.Module):
         self.batch_norm_layer = nn.BatchNorm1d(num_features=256)
         self.output = nn.Linear(256, num_classes)
 
+    # non fa una sega
     def forward(self, x):
-        x = self.inception(x)
-
+        x, aux = self.inception(x)
         x = self.dropout(x)
         x = self.global_average_pooling2d(x)
         x = self.dense(x)
