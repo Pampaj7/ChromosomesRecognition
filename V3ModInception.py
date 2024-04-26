@@ -42,12 +42,13 @@ def processData(batch_size, modelname):
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
             transforms.RandomAffine(degrees=5, translate=(0.05, 0.05), scale=(0.95, 1.05), shear=5),
             transforms.GaussianBlur(kernel_size=(5, 9), sigma=(0.1, 5)),
-        ], p=0.9),
+        ], p=0.7),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.485, 0.485], std=[0.229, 0.229, 0.229])
     ])
 
     full_dataset = ImageFolder('dataset/DataGood/ChromoClassified', transform=transform)
+
     total_size = len(full_dataset)
     train_size = int(0.7 * total_size)
     val_size = int(0.2 * total_size)
@@ -62,12 +63,16 @@ def processData(batch_size, modelname):
     return train_loader, val_loader, test_loader
 
 
-def train(model, train_loader, val_loader, test_loader, lr, epochs):
+def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=lr)
+    optimizer = opt(model.parameters(), lr=lr, weight_decay=0.5)  # weight decay is a regularization term
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)  # multiplied by 0.1 each 30 epochs
+
+    early_stop_counter = 0
+    patience = 5  # epochs to wait before stopping
 
     # Initialize lists for storing metrics
     train_losses, train_accuracies = [], []
@@ -95,6 +100,8 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs):
             _, predicted = torch.max(outputs, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
+
+        scheduler.step()
 
         # Calculate training metrics
         epoch_loss = running_loss / len(train_loader)
@@ -140,6 +147,12 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs):
         if correct_val / total_val > best_validation:
             best_validation = correct_val / total_val
             torch.save(model.state_dict(), "models/" + model.name + ".pt")
+            early_stop_counter = 0  # reset the counter
+        else:
+            early_stop_counter += 1
+            if early_stop_counter >= patience:
+                print(f'Early stopping at epoch {epoch + 1}')
+                break
 
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy * 100:.2f}%')
 
@@ -202,6 +215,37 @@ def load_all_metrics(model_name):
     return metrics
 
 
+def final_plot():
+    # Names of the models you have saved metrics for
+    model_names = ["V3ModInception",
+                   # "V3ModInceptionPaper",
+                   "VGG16",
+                   "ResNet50"]
+    metrics_labels = ['train_losses',
+                      'train_accuracies',
+                      'validation_losses',
+                      'validation_accuracies',
+                      'test_losses',
+                      'test_accuracies']
+
+    # Load metrics for each model and prepare the plots
+    fig, axs = plt.subplots(2, 3, figsize=(15, 10))  # 2x3 grid for six metrics
+    fig.suptitle('Comparison of Training Metrics Across Models')
+
+    for i, metric_label in enumerate(metrics_labels):
+        ax = axs[i // 3, i % 3]  # Determine the subplot position
+        for name in model_names:
+            metrics = load_all_metrics(name)
+            ax.plot(metrics[metric_label], label=name)
+            ax.set_title(metric_label.replace('_', ' ').capitalize())
+            ax.set_xlabel('Epochs')
+            ax.set_ylabel(metric_label.split('_')[1].capitalize())
+        ax.legend()
+
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.show()
+
+
 def pipeline(model_type):
     model = chooseModel(model_type)
     # model_summary(model)
@@ -212,36 +256,40 @@ def pipeline(model_type):
     plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
 
 
+def grid_search(model_type, lr_options, optimizers):
+    results = {}
+    for lr in lr_options:
+        for optimizer in optimizers:
+            print(f"Training model with lr={lr} and optimizer={optimizer}")
+            model = chooseModel(model_type)
+            train_loader, val_loader, test_loader = processData(batch_size=16, modelname=model.name)
+            train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
+                model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=lr,
+                epochs=5, opt=optimizer)
+
+            plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses,
+                 test_accuracies)
+
+            # Store or print results
+            key = f"LR: {lr}, Optimizer: {optimizer.__name__}"
+            results[key] = {
+                'train_losses': train_losses,
+                'train_accuracies': train_accuracies,
+                'validation_losses': validation_losses,
+                'validation_accuracies': validation_accuracies
+            }
+
+    return results
+
+
+lr_options = [0.0001, 0.001, 0.01]
+optimizers = [optim.Adam, optim.SGD, optim.RMSprop]
+"""
 pipeline(0)
 # pipeline(1) # TODO need to fix the model
 pipeline(2)
 pipeline(3)
+"""
+grid_search(0, lr_options, optimizers)
 
-# Names of the models you have saved metrics for
-model_names = ["V3ModInception",
-               # "V3ModInceptionPaper",
-               "VGG16",
-               "ResNet50"]
-metrics_labels = ['train_losses',
-                  'train_accuracies',
-                  'validation_losses',
-                  'validation_accuracies',
-                  'test_losses',
-                  'test_accuracies']
-
-# Load metrics for each model and prepare the plots
-fig, axs = plt.subplots(2, 3, figsize=(15, 10))  # 2x3 grid for six metrics
-fig.suptitle('Comparison of Training Metrics Across Models')
-
-for i, metric_label in enumerate(metrics_labels):
-    ax = axs[i//3, i%3]  # Determine the subplot position
-    for name in model_names:
-        metrics = load_all_metrics(name)
-        ax.plot(metrics[metric_label], label=name)
-        ax.set_title(metric_label.replace('_', ' ').capitalize())
-        ax.set_xlabel('Epochs')
-        ax.set_ylabel(metric_label.split('_')[1].capitalize())
-    ax.legend()
-
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.show()
+final_plot()

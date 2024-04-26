@@ -50,10 +50,10 @@ batch size, 16, 32, 64
 learning rate, 0.001, 0.01, 0.1
 number of epochs, 10
 optimizer, Adam, SGD, RMSprop
-early stopping, yes, no
-cross-validation, 5-fold, 10-fold
+early stopping, yes, no done
+cross-validation, 5-fold, 10-fold troiaio da fare
 evaluation metric, accuracy, precision, recall, F1 score
-scheduler
-wheight decay
+scheduler done
+wheight decay doen
 padding done
 fai grid search

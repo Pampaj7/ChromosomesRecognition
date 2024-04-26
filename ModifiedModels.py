@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import Inception_V3_Weights
-from tqdm import tqdm
 
 
 class ModifiedInceptionV3Paper(nn.Module):
