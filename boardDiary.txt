@@ -57,3 +57,5 @@ scheduler done
 wheight decay doen
 padding done
 fai grid search
+
+plot nome modello, opt, lr

@@ -170,14 +170,15 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
     return train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies
 
 
-def plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies):
+def plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies,
+         lr, optimizer_name, model_type):
     # Plotting
     plt.figure(figsize=(12, 5))
     plt.subplot(1, 2, 1)
     plt.plot(train_losses, label='Training Loss')
     plt.plot(validation_losses, label='Validation Loss')
     plt.plot(test_losses, label='Test Loss')
-    plt.title('Loss across Training, Validation, and Testing')
+    plt.title(f'Loss across Training, Validation, and Testing | {model_type} | LR: {lr} | Optimizer: {optimizer_name}')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
@@ -186,13 +187,15 @@ def plot(model, train_losses, train_accuracies, validation_losses, validation_ac
     plt.plot(train_accuracies, label='Training Accuracy')
     plt.plot(validation_accuracies, label='Validation Accuracy')
     plt.plot(test_accuracies, label='Test Accuracy')
-    plt.title('Accuracy across Training, Validation, and Testing')
+    plt.title(
+        f'Accuracy across Training, Validation, and Testing | {model_type} | LR: {lr} | Optimizer: {optimizer_name}')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig('models/' + model.name + ".png")
+    filename = f'plots/{model.name}_LR{lr}_OPT{optimizer_name}.png'
+    plt.savefig(filename)
     plt.show()
 
 
@@ -256,19 +259,21 @@ def pipeline(model_type):
     plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
 
 
+def save_results(results, filename):
+    with open(filename, 'w') as f:
+        json.dump(results, f)
+
+
 def grid_search(model_type, lr_options, optimizers):
     results = {}
     for lr in lr_options:
         for optimizer in optimizers:
             print(f"Training model with lr={lr} and optimizer={optimizer}")
             model = chooseModel(model_type)
-            train_loader, val_loader, test_loader = processData(batch_size=16, modelname=model.name)
+            train_loader, val_loader, test_loader = processData(batch_size=64, modelname=model.name)
             train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
                 model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=lr,
-                epochs=5, opt=optimizer)
-
-            plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses,
-                 test_accuracies)
+                epochs=10, opt=optimizer)
 
             # Store or print results
             key = f"LR: {lr}, Optimizer: {optimizer.__name__}"
@@ -279,7 +284,11 @@ def grid_search(model_type, lr_options, optimizers):
                 'validation_accuracies': validation_accuracies
             }
 
-    return results
+            plot_filename = f"plots/{key}.png"
+            plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses,
+                 test_accuracies, lr, optimizer.__name__, model_type)
+
+    save_results(results, f'gridResults/grid_search_results_model_{model_type}.json')
 
 
 lr_options = [0.0001, 0.001, 0.01]
@@ -290,6 +299,7 @@ pipeline(0)
 pipeline(2)
 pipeline(3)
 """
-grid_search(0, lr_options, optimizers)
 
-final_plot()
+grid_search(0, lr_options, optimizers)
+grid_search(2, lr_options, optimizers)
+grid_search(3, lr_options, optimizers)
