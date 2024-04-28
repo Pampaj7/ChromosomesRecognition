@@ -21,6 +21,8 @@ def chooseModel(model_type):
         return ModifiedVGG16(24)
     elif model_type == 3:
         return ModifiedResNet50(24)
+    elif model_type == 4:
+        return ModifiedResNet18(24)
     else:
         raise ValueError("Unknown model_type")
 
@@ -64,7 +66,7 @@ def processData(batch_size, modelname):
 
 
 def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -89,7 +91,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
         for images, labels in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}', unit='batch'):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
-            if model.name == "VGG16" or model.name == "ResNet50":  # name defined in the ModifiedModels.py
+            if model.name == "VGG16" or model.name == "ResNet50" or model.name == "ResNet18":  # name defined in the ModifiedModels.py
                 outputs = model(images)  # if vgg16 and resnet need 1 parameter
             else:
                 outputs, _ = model(images)
@@ -254,7 +256,7 @@ def pipeline(model_type):
     # model_summary(model)
     train_loader, val_loader, test_loader = processData(batch_size=16, modelname=model.name)
     train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
-        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=30)
+        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=30, opt=optim.Adam)
 
     plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
 
@@ -295,11 +297,14 @@ lr_options = [0.0001, 0.001, 0.01]
 optimizers = [optim.Adam, optim.SGD, optim.RMSprop]
 """
 pipeline(0)
-# pipeline(1) # TODO need to fix the model
+pipeline(1) # TODO need to fix the model
 pipeline(2)
 pipeline(3)
 """
 
-grid_search(0, lr_options, optimizers)
+""" grid_search(0, lr_options, optimizers)
 grid_search(2, lr_options, optimizers)
 grid_search(3, lr_options, optimizers)
+ """
+
+pipeline(1)
