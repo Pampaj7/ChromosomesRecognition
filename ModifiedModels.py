@@ -5,27 +5,31 @@ from torchvision.models import Inception_V3_Weights
 
 
 class ModifiedInceptionV3Paper(nn.Module):
-    def __init__(self, num_classes=24) -> None:
+    def __init__(self, num_classes=24):
         super(ModifiedInceptionV3Paper, self).__init__()
-        self.inception = models.inception_v3(weights=Inception_V3_Weights.DEFAULT)
+        self.inception = models.inception_v3(pretrained=True)
+        # Modify layers as needed
         self.inception.Conv2d_1a_3x3.conv = nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), bias=False)
         self.inception.fc = nn.Linear(in_features=2048, out_features=num_classes, bias=True)
-        self.name = "V3ModInceptionPaper"
         # additional layers
         self.dropout = nn.Dropout(0.5)
-        self.global_average_pooling2d = nn.AvgPool2d(2, 2)
-        self.dense = nn.Linear(2048, 256)
+        self.global_average_pooling2d = nn.AdaptiveAvgPool1d((1))
+        self.dense = nn.Linear(2048, num_classes)  # Adjusted input size to match global average pooling
         self.batch_norm_layer = nn.BatchNorm1d(num_features=256)
         self.output = nn.Linear(256, num_classes)
+        self.name = "V3ModInceptionPaper"
 
-    # non fa una sega
+
     def forward(self, x):
         x, aux = self.inception(x)
         x = self.dropout(x)
         x = self.global_average_pooling2d(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor
         x = self.dense(x)
         x = self.batch_norm_layer(x)
         x = self.output(x)
+        return x
+
 
 
 class ModifiedInceptionV3(nn.Module):
@@ -89,6 +93,20 @@ class ModifiedResNet50(nn.Module):
         self.features = nn.Sequential(*list(original_model.children())[:-1])  # Remove last layer
         self.classifier = nn.Linear(2048, num_classes)
         self.name = 'ResNet50'
+
+    def forward(self, x):
+        x = self.features(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = self.classifier(x)
+        return x
+    
+class ModifiedResNet18(nn.Module):
+    def __init__(self, num_classes):
+        super(ModifiedResNet18, self).__init__()
+        original_model = models.resnet18(pretrained=True)
+        self.features = nn.Sequential(*list(original_model.children())[:-1])  # Remove last layer
+        self.classifier = nn.Linear(512, num_classes)  # Adjust for ResNet-18
+        self.name = 'ResNet18'
 
     def forward(self, x):
         x = self.features(x)
