@@ -5,29 +5,28 @@ import torchvision.transforms as transforms
 from matplotlib import pyplot as plt
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader, random_split
-import torchvision.models as models
-from torchvision.models import Inception_V3_Weights
 from tqdm import tqdm
-from ModifiedModels import *
+import ModifiedModels as mm
 import json
+
+classes = 24
 
 
 def chooseModel(model_type):
     if model_type == 0:
-        return ModifiedInceptionV3(24)
+        return mm.ModifiedInceptionV3(classes)
     elif model_type == 1:
-        return ModifiedInceptionV3Paper(24)
+        return mm.ModifiedInceptionV3Paper(classes)
     elif model_type == 2:
-        return ModifiedVGG16(24)
+        return mm.ModifiedVGG16(classes)
     elif model_type == 3:
-        return ModifiedResNet50(24)
+        return mm.ModifiedResNet50(classes)
     elif model_type == 4:
-        return ModifiedResNet18(24)
+        return mm.ModifiedResNet18(classes)
     else:
         raise ValueError("Unknown model_type")
 
 
-# took input 224x224
 def processData(batch_size, modelname):
     # create the data loader to use during train
     if modelname == "V3ModInceptionPaper" or modelname == "V3ModInception":
@@ -74,7 +73,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)  # multiplied by 0.1 each 30 epochs
 
     early_stop_counter = 0
-    patience = 5  # epochs to wait before stopping
+    patience = 10  # epochs to wait before stopping
 
     # Initialize lists for storing metrics
     train_losses, train_accuracies = [], []
@@ -91,7 +90,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
         for images, labels in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}', unit='batch'):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
-            if not model.name=="V3ModInception":  # name defined in the ModifiedModels.py
+            if not model.name == "V3ModInception":  # name defined in the ModifiedModels.py
                 outputs = model(images)  # if vgg16 and resnet need 1 parameter
             else:
                 outputs, _ = model(images)
@@ -149,7 +148,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
         if correct_val / total_val > best_validation:
             best_validation = correct_val / total_val
             torch.save(model.state_dict(), "models/" + model.name + ".pt")
-            early_stop_counter = 0  # reset the counter
+            early_stop_counter = 0
         else:
             early_stop_counter += 1
             if early_stop_counter >= patience:
@@ -256,7 +255,8 @@ def pipeline(model_type):
     # model_summary(model)
     train_loader, val_loader, test_loader = processData(batch_size=16, modelname=model.name)
     train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
-        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=30, opt=optim.Adam)
+        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=30,
+        opt=optim.Adam)
 
     plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
 
@@ -286,7 +286,6 @@ def grid_search(model_type, lr_options, optimizers):
                 'validation_accuracies': validation_accuracies
             }
 
-            plot_filename = f"plots/{key}.png"
             plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses,
                  test_accuracies, lr, optimizer.__name__, model_type)
 
@@ -295,6 +294,7 @@ def grid_search(model_type, lr_options, optimizers):
 
 lr_options = [0.0001, 0.001, 0.01]
 optimizers = [optim.Adam, optim.SGD, optim.RMSprop]
+
 """
 pipeline(0)
 pipeline(1) # TODO need to fix the model
@@ -302,9 +302,8 @@ pipeline(2)
 pipeline(3)
 """
 
-""" grid_search(0, lr_options, optimizers)
+grid_search(0, lr_options, optimizers)
+grid_search(1, lr_options, optimizers)
 grid_search(2, lr_options, optimizers)
 grid_search(3, lr_options, optimizers)
- """
-
-pipeline(1)
+grid_search(4, lr_options, optimizers)

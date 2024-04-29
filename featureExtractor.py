@@ -51,7 +51,7 @@ def calculate_skeleton_length(pruned_skeleton):
     points = np.argwhere(pruned_skeleton)  # Extract the coordinates of the white pixels
     length = 0
     for i in range(len(points) - 1):
-        length += np.linalg.norm(points[i+1] - points[i])
+        length += np.linalg.norm(points[i + 1] - points[i])
     return length
 
 
@@ -103,7 +103,7 @@ print(f"Between points: {pt1} and {pt2}")
 
 skeleton = skeletonize(image)
 thinned_skeleton = thinning(skeleton)
-#pruned_skeleton = pruning(thinned_skeleton, 10)
+# pruned_skeleton = pruning(thinned_skeleton, 10)
 
 length_of_skeleton = calculate_skeleton_length(thinned_skeleton)
 print(f"The length of the pruned skeleton is approximately: {length_of_skeleton} pixels")

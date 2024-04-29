@@ -10,6 +10,8 @@ import torch.nn as nn
 app = Flask(__name__)
 CORS(app)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
 class ModifiedInceptionV3(nn.Module):
     def __init__(self, num_classes):
         super(ModifiedInceptionV3, self).__init__()
@@ -19,17 +21,18 @@ class ModifiedInceptionV3(nn.Module):
 
     def forward(self, x):
         return self.inception(x)
+
+
 model_name = "V3ModInception.pt"
 inception = ModifiedInceptionV3(num_classes=24).to(device)
 
 # Load the TorchScript model
 map_location = 'cpu' if not torch.cuda.is_available() else None
-inception.load_state_dict(torch.load("ChromosomesRecognition/models/" + model_name, map_location=map_location))
+inception.load_state_dict(torch.load("models/" + model_name, map_location=map_location))
 class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15': 7, '16': 8, '17': 9, '18': 10,
               '19': 11, '2': 12, '20': 13, '21': 14, '22': 15, '23': 16, '3': 17, '4': 18, '5': 19, '6': 20, '7': 21,
               '8': 22, '9': 23}
 index_to_class = {v: k for k, v in class_dict.items()}
-
 
 
 @app.route('/getChromosome/', methods=['POST'])
@@ -58,6 +61,7 @@ def getChromosome():
         predicted = torch.argmax(probabilities).item()
         correct_class = index_to_class[predicted]
     return jsonify({'predictions': correct_class})
+
 
 if __name__ == '__main__':
     app.run(port=8888, debug=True)
