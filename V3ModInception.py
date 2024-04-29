@@ -91,7 +91,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
         for images, labels in tqdm(train_loader, desc=f'Epoch {epoch + 1}/{num_epochs}', unit='batch'):
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
-            if model.name == "VGG16" or model.name == "ResNet50" or model.name == "ResNet18":  # name defined in the ModifiedModels.py
+            if not model.name=="V3ModInception":  # name defined in the ModifiedModels.py
                 outputs = model(images)  # if vgg16 and resnet need 1 parameter
             else:
                 outputs, _ = model(images)
