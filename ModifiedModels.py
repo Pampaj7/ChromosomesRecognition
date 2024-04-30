@@ -54,13 +54,13 @@ class ModifiedVGG16(nn.Module):
 
         # Define the classifier
         self.classifier = nn.Sequential(
-            nn.Dropout(0.5),
+            nn.Dropout(0.2),
             nn.AdaptiveAvgPool2d((1, 1)),  # This is equivalent to Keras's GlobalAveragePooling2D
             nn.Flatten(),  # Flatten the output of the pooling layer
             nn.Linear(512, 256),  # Dense layer
             nn.ReLU(True),
             nn.BatchNorm1d(256),  # Batch normalization
-            nn.Dropout(0.5),  # Dropout
+            nn.Dropout(0.2),  # Dropout
             nn.Linear(256, num_classes),  # Output layer, replace num_classes with the actual number of classes
         )
 

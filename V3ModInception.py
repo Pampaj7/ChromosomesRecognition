@@ -69,8 +69,8 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = opt(model.parameters(), lr=lr, weight_decay=0.5)  # weight decay is a regularization term
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)  # multiplied by 0.1 each 30 epochs
+    optimizer = opt(model.parameters(), lr=lr, weight_decay=1e-5)  # weight decay is a regularization term
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)  # multiplied by 0.1 each 30 epochs
 
     early_stop_counter = 0
     patience = 10  # epochs to wait before stopping
@@ -179,7 +179,7 @@ def plot(model, train_losses, train_accuracies, validation_losses, validation_ac
     plt.plot(train_losses, label='Training Loss')
     plt.plot(validation_losses, label='Validation Loss')
     plt.plot(test_losses, label='Test Loss')
-    plt.title(f'Loss across Training, Validation, and Testing | {model_type} | LR: {lr} | Optimizer: {optimizer_name}')
+    plt.title(f'Loss | {model_type} | LR: {lr} | Optimizer: {optimizer_name}')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
@@ -188,8 +188,7 @@ def plot(model, train_losses, train_accuracies, validation_losses, validation_ac
     plt.plot(train_accuracies, label='Training Accuracy')
     plt.plot(validation_accuracies, label='Validation Accuracy')
     plt.plot(test_accuracies, label='Test Accuracy')
-    plt.title(
-        f'Accuracy across Training, Validation, and Testing | {model_type} | LR: {lr} | Optimizer: {optimizer_name}')
+    plt.title(f'Accuracy | {model_type} | LR: {lr} | Optimizer: {optimizer_name}')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend()
@@ -275,7 +274,7 @@ def grid_search(model_type, lr_options, optimizers):
             train_loader, val_loader, test_loader = processData(batch_size=64, modelname=model.name)
             train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
                 model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=lr,
-                epochs=10, opt=optimizer)
+                epochs=30, opt=optimizer)
 
             # Store or print results
             key = f"LR: {lr}, Optimizer: {optimizer.__name__}"
@@ -303,7 +302,7 @@ pipeline(3)
 """
 
 grid_search(0, lr_options, optimizers)
-grid_search(1, lr_options, optimizers)
+#grid_search(1, lr_options, optimizers)
 grid_search(2, lr_options, optimizers)
 grid_search(3, lr_options, optimizers)
 grid_search(4, lr_options, optimizers)
