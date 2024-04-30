@@ -59,3 +59,48 @@ padding done
 fai grid search
 
 plot nome modello, opt, lr
+
+
+Presentazione
+
+prima parte con il primo dataset e la faccio io
+seconda con il secondo dataset e la fai tu
+
+1) introduzione problema, richiesta, scopo
+    - riconoscimento cromosomi
+    - a cosa serve e a chi serve
+    - perchè è importante
+
+2) presentazione dataset, immagini, annotazioni, preprocessing, cropping, resizing, normalizzazione, algortimi di segmentazione
+    - dataset1, immagini, cariotipo, annotazioni
+    - preprocessing, come essere immagini per essere accettate
+    - cropping, come si fa, perchè si fa, risultati
+    - erosione, bordi, rumore, maschere, contrasti
+    - waterwash algo
+
+3) perchgè non fa, non siamo capaci, troppo complesso, troppo tempo, troppo costoso -- prime epoche 0.02 accuracy train
+    - non siamo capaci, problema cromosomi sovrapposti, impossibile da pulire, a stato arte si fa quasi mano
+    - servivano tecniche molto avanzate non pensate per questo progetto
+    - prova modello disastroso, non siamo capaci
+
+4) cambio datat, cosa differisce, presentazione dati,
+    - presentazione, storia, immagini, preproc già fatto
+    - augmentation, schedulazione, wheight decay, padding, early stopping
+    - tensorflow merda, pytorch migliore
+    - studio stato dell'arte di modelli, copiato e diversificato. usato la 3 dato che 2 no
+
+6) modelli usati, architetture, hyperparametri, training, test, risultati, confronto, conclusioni
+    - diversi modelli usati
+    - hyperparameter
+    - cazzata dell'inferenza con indici sballati
+    - split stato arte cosi
+    - layer modificati
+    - risultati, confronto, conclusioni
+
+7) api, come utilizzare, inferenza
+    - api, come si usa, come si fa inferenza
+    - risultati, confronto, conclusioni
+
+8) possibili implementaaioni - cropping con algo segm SAM meta
+    - cropping con algo segm SAM meta
+    - risultati, confronto, conclusioni
