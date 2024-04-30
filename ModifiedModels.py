@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import Inception_V3_Weights
@@ -21,14 +22,17 @@ class ModifiedInceptionV3Paper(nn.Module):
         self.name = "V3ModInceptionPaper"
 
     def forward(self, x):
-        x, aux = self.inception(x)
+        output = self.inception(x)
+        if isinstance(output, tuple):
+            x, aux = output
+        else:
+            x = output    
         x = self.dropout(x)
         # x = self.global_average_pooling2d(x)
         x = x.view(x.size(0), -1)
         x = self.dense(x)
         x = self.batch_norm_layer(x)
         x = self.output(x)
-        print(x.shape)
         return x
 
 
