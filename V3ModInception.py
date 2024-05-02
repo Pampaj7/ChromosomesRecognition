@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 import ModifiedModels as mm
 import json
+from torchvision import datasets
 
 classes = 24
 
@@ -48,7 +49,7 @@ def processData(batch_size, modelname):
         transforms.Normalize(mean=[0.485, 0.485, 0.485], std=[0.229, 0.229, 0.229])
     ])
 
-    full_dataset = ImageFolder('dataset/DataGood/ChromoClassified', transform=transform)
+    full_dataset = datasets.ImageFolder('dataset/DataGood/ChromoClassified', transform=transform)
 
     total_size = len(full_dataset)
     train_size = int(0.7 * total_size)
@@ -57,9 +58,9 @@ def processData(batch_size, modelname):
 
     train_dataset, val_dataset, test_dataset = random_split(full_dataset, [train_size, val_size, test_size])
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, test_loader
 
@@ -301,8 +302,8 @@ pipeline(2)
 pipeline(3)
 """
 
-grid_search(0, lr_options, optimizers)
-#grid_search(1, lr_options, optimizers)
-grid_search(2, lr_options, optimizers)
-grid_search(3, lr_options, optimizers)
-grid_search(4, lr_options, optimizers)
+# grid_search(0, lr_options, optimizers)
+grid_search(1, lr_options, optimizers)
+# grid_search(2, lr_options, optimizers)
+# grid_search(3, lr_options, optimizers)
+# grid_search(4, lr_options, optimizers)
