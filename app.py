@@ -24,13 +24,15 @@ inception = ModifiedInceptionV3(num_classes=24).to(device)
 
 # Load the TorchScript model
 map_location = 'cpu' if not torch.cuda.is_available() else None
-inception.load_state_dict(torch.load("ChromosomesRecognition/models/" + model_name, map_location=map_location))
+inception.load_state_dict(torch.load("models/" + model_name, map_location=map_location))
 class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15': 7, '16': 8, '17': 9, '18': 10,
               '19': 11, '2': 12, '20': 13, '21': 14, '22': 15, '23': 16, '3': 17, '4': 18, '5': 19, '6': 20, '7': 21,
               '8': 22, '9': 23}
 index_to_class = {v: k for k, v in class_dict.items()}
 
 
+
+# to call from terminal curl -X POST -F "image=@path/to/your/image.jpg" http://localhost:8888/getChromosome/
 
 @app.route('/getChromosome/', methods=['POST'])
 def getChromosome():

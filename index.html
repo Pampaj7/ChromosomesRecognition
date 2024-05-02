@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Prediction</title>
+</head>
+<body>
+    <h1>Image Prediction</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="predict()">Predict</button>
+    <br><br>
+    <div id="predictionResult"></div>
+    <div id="imageContainer"></div>
+
+    <script>
+        function predict() {
+            var fileInput = document.getElementById('imageInput');
+            var file = fileInput.files[0];
+            var formData = new FormData();
+            formData.append('image', file);
+
+            fetch('http://localhost:8888/getChromosome/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                var predictionResult = document.getElementById('predictionResult');
+                var imageContainer = document.getElementById('imageContainer');
+
+                // Display prediction
+                predictionResult.innerHTML = '<h2>Prediction:</h2>' +
+                    '<p>' + data.predictions + '</p>';
+
+                // Display image
+                var imageURL = URL.createObjectURL(file);
+                var imageElement = document.createElement('img');
+                imageElement.src = imageURL;
+                imageElement.style.maxWidth = '400px';
+                imageContainer.innerHTML = '';
+                imageContainer.appendChild(imageElement);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
