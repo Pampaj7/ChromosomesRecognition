@@ -3,44 +3,16 @@ import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import Inception_V3_Weights
 
-""" 
+
 class ModifiedInceptionV3Paper(nn.Module):
     def __init__(self, num_classes=24):
         super(ModifiedInceptionV3Paper, self).__init__()
         self.inception = models.inception_v3(pretrained=True)
-        # Modify layers as needed
-        self.inception.Conv2d_1a_3x3.conv = nn.Conv2d(3, 32, kernel_size=(3, 3), stride=(2, 2), bias=False)
-        # Remove the original fully connected layer (fc) from the inception model
-        self.inception.fc = None
-        # additional layers
-        self.dropout = nn.Dropout(0.5)
-        self.global_average_pooling2d = nn.AdaptiveAvgPool2d((1,1))
-        self.dense = nn.Linear(2048, 256)  # Adjusted input size to match global average pooling
-        self.batch_norm_layer = nn.BatchNorm1d(num_features=256)
-        self.output = nn.Linear(256, num_classes)
-        self.name = "V3ModInceptionPaper"
 
-    def forward(self, x):
-        x, aux = self.inception(x)
-        x = self.dropout(x)
-        x = self.global_average_pooling2d(x)
-        x = x.view(x.size(0), -1)  # Flatten the tensor
-        x = self.dense(x)
-        x = self.batch_norm_layer(x)
-        if self.inception.fc is not None:
-            x = self.inception.fc(x)
-        x = self.output(x)
-        return x """
-
-class ModifiedInceptionV3Paper(nn.Module):
-    def __init__(self, num_classes = 24):
-        super(ModifiedInceptionV3Paper, self).__init__()
-        self.inception = models.inception_v3(pretrained=True)
-        
         # Modify output layer
         num_ftrs = self.inception.fc.in_features
         self.inception.fc = nn.Linear(num_ftrs, num_ftrs)
-        
+
         # Additional layers
         self.dropout = nn.Dropout(0.5)
         self.global_average_pooling2d = nn.AdaptiveAvgPool1d((1))
@@ -48,7 +20,7 @@ class ModifiedInceptionV3Paper(nn.Module):
         self.batch_norm_layer = nn.BatchNorm1d(num_features=256)
         self.output = nn.Linear(256, num_classes)
         self.name = "V3ModInceptionPaper"
-        
+
     def forward(self, x):
         output = self.inception(x)
         if isinstance(output, tuple):
@@ -56,14 +28,12 @@ class ModifiedInceptionV3Paper(nn.Module):
         else:
             x = output    
         x = self.dropout(x)
-        #x = self.global_average_pooling2d(x)
+        # x = self.global_average_pooling2d(x)
         x = x.view(x.size(0), -1)
         x = self.dense(x)
         x = self.batch_norm_layer(x)
         x = self.output(x)
         return x
-
-
 
 
 class ModifiedInceptionV3(nn.Module):
@@ -78,22 +48,6 @@ class ModifiedInceptionV3(nn.Module):
         return self.inception(x)
 
 
-class ModifiedResNet(nn.Module):
-    def __init__(self, num_classes):
-        super(ModifiedResNet, self).__init__()
-
-        resnet50 = models.resnet50(pretrained=True)
-        num_features = resnet50.fc.in_features
-        resnet50.fc = nn.Linear(num_features, num_classes)
-        for param in resnet50.parameters():
-            param.requires_grad = False
-
-        self.model = resnet50
-
-    def forward(self, x):
-        return self.model(x)
-
-
 class ModifiedVGG16(nn.Module):
     def __init__(self, num_classes):
         super(ModifiedVGG16, self).__init__()
@@ -104,13 +58,13 @@ class ModifiedVGG16(nn.Module):
 
         # Define the classifier
         self.classifier = nn.Sequential(
-            nn.Dropout(0.5),
+            nn.Dropout(0.2),
             nn.AdaptiveAvgPool2d((1, 1)),  # This is equivalent to Keras's GlobalAveragePooling2D
             nn.Flatten(),  # Flatten the output of the pooling layer
             nn.Linear(512, 256),  # Dense layer
             nn.ReLU(True),
             nn.BatchNorm1d(256),  # Batch normalization
-            nn.Dropout(0.5),  # Dropout
+            nn.Dropout(0.2),  # Dropout
             nn.Linear(256, num_classes),  # Output layer, replace num_classes with the actual number of classes
         )
 
@@ -133,7 +87,8 @@ class ModifiedResNet50(nn.Module):
         x = x.view(x.size(0), -1)  # Flatten the tensor
         x = self.classifier(x)
         return x
-    
+
+
 class ModifiedResNet18(nn.Module):
     def __init__(self, num_classes):
         super(ModifiedResNet18, self).__init__()

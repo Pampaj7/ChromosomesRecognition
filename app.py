@@ -10,6 +10,8 @@ import torch.nn as nn
 app = Flask(__name__)
 CORS(app)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
 class ModifiedInceptionV3(nn.Module):
     def __init__(self, num_classes):
         super(ModifiedInceptionV3, self).__init__()
@@ -19,6 +21,8 @@ class ModifiedInceptionV3(nn.Module):
 
     def forward(self, x):
         return self.inception(x)
+
+
 model_name = "V3ModInception.pt"
 inception = ModifiedInceptionV3(num_classes=24).to(device)
 
@@ -31,9 +35,12 @@ class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15':
 index_to_class = {v: k for k, v in class_dict.items()}
 
 
+<<<<<<< HEAD
 
 # to call from terminal curl -X POST -F "image=@path/to/your/image.jpg" http://localhost:8888/getChromosome/
 
+=======
+>>>>>>> e7d64ec0f08873045f18f6ea3aef309a312917e2
 @app.route('/getChromosome/', methods=['POST'])
 def getChromosome():
     inception.eval()
@@ -60,6 +67,7 @@ def getChromosome():
         predicted = torch.argmax(probabilities).item()
         correct_class = index_to_class[predicted]
     return jsonify({'predictions': correct_class})
+
 
 if __name__ == '__main__':
     app.run(port=8888, debug=True)
