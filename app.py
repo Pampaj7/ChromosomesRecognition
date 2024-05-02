@@ -35,6 +35,10 @@ class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15':
 index_to_class = {v: k for k, v in class_dict.items()}
 
 
+
+
+# to call from terminal curl -X POST -F "image=@path/to/your/image.jpg" http://localhost:8888/getChromosome/
+
 @app.route('/getChromosome/', methods=['POST'])
 def getChromosome():
     inception.eval()
