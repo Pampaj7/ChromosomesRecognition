@@ -127,6 +127,8 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
 
         # Calculate validation metrics
         validation_losses.append(val_loss / len(val_loader))
+        val_accuracy = correct_val / total_val
+        val_losses = val_loss / len(val_loader)
         validation_accuracies.append(correct_val / total_val)
 
         # Test set evaluation
@@ -156,7 +158,7 @@ def train(model, train_loader, val_loader, test_loader, lr, epochs, opt):
                 print(f'Early stopping at epoch {epoch + 1}')
                 break
 
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {epoch_loss:.4f}, Accuracy: {epoch_accuracy * 100:.2f}%')
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {val_losses:.4f}, Accuracy: {val_accuracy * 100:.2f}%')
 
     metrics = {
         'train_losses': train_losses,
@@ -195,7 +197,7 @@ def plot(model, train_losses, train_accuracies, validation_losses, validation_ac
     plt.legend()
 
     plt.tight_layout()
-    filename = f'plots/{model.name}_LR{lr}_OPT{optimizer_name}.png'
+    filename = f'plots/FINAL{model.name}_LR{lr}_OPT{optimizer_name}.png'
     plt.savefig(filename)
     plt.show()
 
@@ -253,12 +255,12 @@ def final_plot():
 def pipeline(model_type):
     model = chooseModel(model_type)
     # model_summary(model)
-    train_loader, val_loader, test_loader = processData(batch_size=16, modelname=model.name)
+    train_loader, val_loader, test_loader = processData(batch_size=64, modelname=model.name)
     train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies = train(
-        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=30,
+        model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, lr=0.0001, epochs=200,
         opt=optim.Adam)
 
-    plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies)
+    plot(model, train_losses, train_accuracies, validation_losses, validation_accuracies, test_losses, test_accuracies, 0.0001, "Adam", model.name)
 
 
 def save_results(results, filename):
@@ -295,15 +297,13 @@ def grid_search(model_type, lr_options, optimizers):
 lr_options = [0.0001, 0.001, 0.01]
 optimizers = [optim.Adam, optim.SGD, optim.RMSprop]
 
-"""
-pipeline(0)
-pipeline(1) # TODO need to fix the model
-pipeline(2)
-pipeline(3)
-"""
+# pipeline(0)
+# pipeline(1)
+# pipeline(2)
+pipeline(4)
 
 # grid_search(0, lr_options, optimizers)
-grid_search(1, lr_options, optimizers)
+# grid_search(1, lr_options, optimizers)
 # grid_search(2, lr_options, optimizers)
 # grid_search(3, lr_options, optimizers)
 # grid_search(4, lr_options, optimizers)

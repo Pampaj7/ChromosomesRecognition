@@ -1,3 +1,4 @@
+import cv2
 from PIL import Image
 import torch
 from torchvision.models import Inception_V3_Weights
@@ -8,12 +9,7 @@ from ModifiedModels import *
 
 # List of image filenames
 filenames = [
-    "origin/01562828258.8049057.5.tiff", "origin/21562828259.126213.3.tiff", "origin/431562828258.5368197.3.tiff",
-    "origin/691562828258.3360758.5.tiff", "origin/731562828258.3894138.7.tiff",
-    "origin/1351562828258.40041.5.tiff", "origin/311562828259.323763.2.tiff", "origin/2461562828257.9331849.20.tiff",
-    "origin/4071562828258.0701625.14.tiff",
-    "origin/4671562828258.9595804.3.tiff", "origin/6421562828258.7006133.8.tiff", "origin/9011562828258.2214892.9.tiff",
-    "origin/14401562828258.2325635.9.tiff",
+"DataNew/1/1_1_56131_115966_1341593.tiff"
 
 ]
 
@@ -23,6 +19,7 @@ class_dict = {'0': 0, '1': 1, '10': 2, '11': 3, '12': 4, '13': 5, '14': 6, '15':
               '19': 11, '2': 12, '20': 13, '21': 14, '22': 15, '23': 16, '3': 17, '4': 18, '5': 19, '6': 20, '7': 21,
               '8': 22, '9': 23}
 index_to_class = {v: k for k, v in class_dict.items()}
+
 
 
 def chooseModel(model):
@@ -35,7 +32,7 @@ def chooseModel(model):
         return ModifiedInceptionV3Paper(24)
 
 
-model_name = "ChromosomesRecognition/models/V3ModInception.pt"
+model_name = "models/V3ModInception.pt"
 inception = chooseModel(0).to(device)
 
 # Load the TorchScript model
@@ -57,10 +54,14 @@ path = "dataset/DataGood/ChromoClassified/18/"
 # Iterate over the list of filenames
 for filename in filenames:
     # Load and preprocess the image
-    image = Image.open(filename).convert('RGB')
-    input_image = transform(image).unsqueeze(0)
+    image = cv2.imread(filename)
+    input_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    input_image = input_image.to(device)
+    #image = Image.open(filename).convert('RGB')
+    #input_image = transform(image).unsqueeze(0)
+
+    #input_image = input_image.to(device)
+    input_image = torch.tensor(image).permute(2, 0, 1).unsqueeze(0).float() / 255.0
     with torch.no_grad():
         outputs = inception(input_image)
         probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
