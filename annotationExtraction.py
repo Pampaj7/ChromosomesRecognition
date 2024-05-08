@@ -26,7 +26,7 @@ def extract_annotations(element):
 
 
 def extract_annotations_from_xml(xml_file):
-    tree = ET.parse(xml_file)  # crazy shit by gpt
+    tree = ET.parse(xml_file)
     root = tree.getroot()
     return extract_annotations(root)
 

@@ -7,15 +7,20 @@ from tqdm import tqdm
 
 def display_images(original_image, preprocessed):
     """Display the original and preprocessed images side by side."""
+    # Display the annotated image
+
+
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 2, 1)
-    plt.imshow(original_image)
+    plt.imshow(original_image, cmap='gray')
     plt.title("First Image")
 
     plt.subplot(1, 2, 2)
     plt.imshow(preprocessed, cmap='gray')
     plt.title('Preprocessed Image')
+    plt.savefig('preprocessed_image.png')
     plt.show()
+
 
 
 def preprocess_image(image_path):
@@ -179,9 +184,9 @@ def preprocess_directory(input_dir, output_dir):
                 print(f"Failed to process image {file_name}: {e}")
 
 
-"""
+image_path = 'dataset/Data/24_chromosomes_object/cropped_chromosomes/103064_chromosome_3.jpg'
 original_image = cv2.imread(image_path)
-original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
+#original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
 
 preprocessed_image = preprocess_image(image_path)
 
@@ -204,7 +209,7 @@ masked_image = apply_mask(preprocessed_image, noobj)
 # display_images(preprocessed_image, masked_image)
 
 resized_image = image_resize(masked_image,
-                             (160, 160))  
+                             (299, 299))
 
-display_images(masked_image, resized_image)
-"""
+display_images(original_image, resized_image)
+

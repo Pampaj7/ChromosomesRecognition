@@ -28,6 +28,8 @@ def single_chromo_extractor(image_path, annotations, output_dir, image_file):
         ymax = int(bndbox['ymax'])
 
         cropped_image = image[ymin:ymax, xmin:xmax]
+        cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
+
         if cropped_image.size == 0:  # some images have empty annotations -- dumb annotators
             print(f"The cropped image is empty for annotation {idx} in image {image_file}. Check your annotations.")
             continue
@@ -52,3 +54,32 @@ def complete_extractor(image_dir, annotations_dir, output_dir):
             single_chromo_extractor(image_path, annotations, output_dir, image_file)
         else:
             print(f"No annotation for image {image_file}")
+
+
+def show_chromosome_annotations(image_path, annotations):
+    # Load the image
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Failed to read the image file or the file may be corrupted: {image_path}")
+        return
+
+    # Draw a rectangle around each chromosome on the original image
+    for idx, ann in enumerate(annotations):
+        bndbox = ann['bndbox']
+        xmin = int(bndbox['xmin'])
+        ymin = int(bndbox['ymin'])
+        xmax = int(bndbox['xmax'])
+        ymax = int(bndbox['ymax'])
+
+        # Draw a rectangle (blue color, 2 pixels thickness)
+        cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (255, 0, 0), 2)
+
+    # Display the annotated image
+    cv2.imshow('Chromosome Annotations', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+image_file = "dataset/Data/24_chromosomes_object/JEPG/103064.jpg"
+xml_file = "dataset/Data/24_chromosomes_object/annotations/103064.xml"
+show_chromosome_annotations(image_file, ae.extract_annotations_from_xml(xml_file))
