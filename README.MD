@@ -304,7 +304,7 @@ python api/app.py
 ## 👥 Authors
 
 
-- Leonardo Pampaloni
+- Pampaj
 - Matteo Tinacci
 
 
